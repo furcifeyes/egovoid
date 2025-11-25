@@ -5,4 +5,5 @@ Your personal AI that remembers everything. And never forgets you’re nothing
 Your personal AI that remembers everything. And never forgets you’re nothing.
 
 // 25 novembre 2025 – giorno zero. Il vuoto ha un .app. E ora urla
-npx create-next-app@latest egovoid --typescript --tailwind --eslint
+cd egovoid
+npx create-next-app@latest . --typescript --tailwind --eslint
