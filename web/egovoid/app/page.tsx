@@ -5,8 +5,13 @@ import { useState } from 'react';
 export default function Home() {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [input, setInput] = useState('');
-  const [selectedModel, setSelectedModel] = useState<'gemini' | 'comet'>('gemini');
   const [isLoading, setIsLoading] = useState(false);
+
+  const selectAPI = (userMessage: string): 'gemini' | 'perplexity' => {
+    const searchKeywords = ['cosa', 'quando', 'dove', 'come', 'chi', 'ultime', 'notizie', 'ricerca', 'informazione', 'fonte'];
+    const hasSearchKeyword = searchKeywords.some(kw => userMessage.toLowerCase().includes(kw));
+    return hasSearchKeyword ? 'perplexity' : 'gemini';
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -17,7 +22,9 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const endpoint = selectedModel === 'gemini' ? '/api/gemini' : '/api/comet';
+      const selectedAPI = selectAPI(input);
+      const endpoint = selectedAPI === 'gemini' ? '/api/gemini' : '/api/perplexity';
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -27,13 +34,16 @@ export default function Home() {
       });
 
       const data = await response.json();
-      const assistantMessage = { role: 'assistant' as const, content: data.reply || 'No response' };
+      const assistantMessage = { 
+        role: 'assistant' as const, 
+        content: data.reply || 'Nessuna risposta ricevuta.' 
+      };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Errore:', error);
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant' as const, content: 'Error: Could not fetch response.' },
+        { role: 'assistant' as const, content: 'Errore: Impossibile ricevere una risposta.' },
       ]);
     } finally {
       setIsLoading(false);
@@ -42,42 +52,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-      {/* Header */}
       <header className="border-b border-gray-800 p-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold">EgoVoid</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSelectedModel('gemini')}
-              className={`px-4 py-2 rounded ${
-                selectedModel === 'gemini'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              }`}
-            >
-              Gemini
-            </button>
-            <button
-              onClick={() => setSelectedModel('comet')}
-              className={`px-4 py-2 rounded ${
-                selectedModel === 'comet'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              }`}
-            >
-              Comet
-            </button>
-          </div>
         </div>
       </header>
 
-      {/* Chat Area */}
       <main className="flex-1 max-w-4xl mx-auto w-full p-4 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <h2 className="text-3xl font-bold mb-2">Benvenuto in EgoVoid</h2>
-              <p className="text-gray-400">Inizia una conversazione. L'IA ricorderà tutto.</p>
+              <p className="text-gray-400">Inizia una conversazione. L'IA ricorderà tutto e farà ricerche quando serve.</p>
             </div>
           </div>
         ) : (
@@ -102,7 +88,6 @@ export default function Home() {
         )}
       </main>
 
-      {/* Input Area */}
       <footer className="border-t border-gray-800 p-4 bg-gray-950">
         <div className="max-w-4xl mx-auto flex gap-2">
           <input
