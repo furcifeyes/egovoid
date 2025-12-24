@@ -15,29 +15,44 @@ export default function Home() {
     setInput('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      const assistantMessage = { 
-        role: 'assistant' as const, 
-        content: `EgoVoid ha registrato: "${input}". Messaggio memorizzato nell'archivio personale.` 
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+    try {
+      const response = await fetch('https://cors-anywhere.herokuapp.com/https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer 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`,
+        },
+        body: JSON.stringify({
+          model: 'sonar-pro',
+          messages: [...messages, userMessage],
+          max_tokens: 500,
+        }),
+      });
+
+      const data = await response.json();
+      const reply = data.choices?.[0]?.message?.content || 'Errore: nessuna risposta';
+
+      setMessages((prev) => [...prev, { role: 'assistant' as const, content: reply }]);
+    } catch (error) {
+      console.error('Errore:', error);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant' as const, content: 'Errore: API non disponibile' },
+      ]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       <header className="border-b border-gray-800 p-4">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <img src="/logo.jpg" alt="Logo" className="h-10 w-10" />
-          <h1 className="text-2xl font-bold">EgoVoid</h1>
-        </div>
+        <h1 className="text-2xl font-bold">EgoVoid</h1>
       </header>
 
       <main className="flex-1 max-w-4xl mx-auto w-full p-4 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-6">
-            <img src="/banner.jpg" alt="Banner" className="h-48 w-auto" />
             <div className="text-center">
               <h2 className="text-3xl font-bold mb-2">Benvenuto in EgoVoid</h2>
               <p className="text-gray-400">Inizia una conversazione. L'IA ricorderà tutto.</p>
