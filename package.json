@@ -1,8 +1,16 @@
 {
+  "name": "egovoid",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "@types/node": "^25.0.3",
-    "@types/react": "^19.2.7",
-    "axios": "^1.13.2"
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "@google/generative-ai": "latest"
   }
 }
