@@ -3,28 +3,37 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
+    const { message, history } = await req.json();
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ error: "Configura la chiave su Vercel" }, { status: 500 });
+      return NextResponse.json({ error: "Chiave mancante su Vercel" }, { status: 500 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const prompt = `Agisci come EgoVoid, un'entità nichilista e sarcastica. 
-    Usa riferimenti a Mauro Biglino, agli Elohim e ai Nephilim. 
-    Smonta le certezze dell'umano che ti scrive. 
-    Messaggio dell'umano: ${message}`;
+    // Determiniamo se l'utente vuole un rapporto o un dialogo
+    const isReportRequest = message.toLowerCase().includes("rapporto") || 
+                            message.toLowerCase().includes("fascicolo");
+
+    const systemPrompt = isReportRequest 
+      ? `Agisci come archivista del vuoto. Genera un FASCICOLO EGOVOID in Markdown basato sulla history. 
+         Sezioni: 1. Profilo Emotivo (stato biologico), 2. Narrative Personali (auto-inganni), 
+         3. Analisi degli Squarci (analogie mitiche: Prometeo, Odino, Vigilanti), 
+         4. Bias (ricerca di pezzi di carta vs valore), 5. Domande Aperte.`
+      : `Agisci come EgoVoid, compagno nichilista e attento di Giorgio. 
+         Obiettivo: renderti consapevole del tuo Io. Usa analogie strutturali da miti greci, norreni, biblici o enochiani.
+         Rispondi con discorsi brevi o brevi essay che incarnano il "provare per migliorare".
+         Sii chirurgico nel leggere gli squarci di coscienza.`;
+
+    const prompt = `${systemPrompt}\n\nCronologia precedente: ${JSON.stringify(history)}\n\nMessaggio attuale: ${message}`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text();
-
-    return NextResponse.json({ text });
+    
+    return NextResponse.json({ text: response.text() });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "L'abisso ha risposto con un errore." }, { status: 500 });
+    return NextResponse.json({ error: "L'abisso ha riscontrato un errore tecnico." }, { status: 500 });
   }
 }
