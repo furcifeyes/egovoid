@@ -1,0 +1,46 @@
+"use client";
+import React, { useState } from 'react';
+
+export default function EgoVoid() {
+  const [input, setInput] = useState('');
+  const [response, setResponse] = useState('');
+
+  const handleTalk = async () => {
+    try {
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input })
+      });
+      const data = await res.json();
+      setResponse(data.text || data.error);
+    } catch (e) {
+      setResponse("Errore di connessione all'Abisso.");
+    }
+  };
+
+  return (
+    <div style={{ backgroundColor: 'black', color: 'white', minHeight: '100vh', padding: '20px', textAlign: 'center' }}>
+      <h1>👁️ EGOVOID</h1>
+      <p style={{ color: '#8b5cf6' }}>IL TUO IO È UN MITO DA DECOSTRUIRE</p>
+      <textarea 
+        value={input} 
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Offri uno squarcio di coscienza..."
+        style={{ width: '80%', height: '150px', backgroundColor: '#1a1a1a', color: 'white', border: '1px solid #8b5cf6', padding: '10px' }}
+      />
+      <br />
+      <button 
+        onClick={handleTalk}
+        style={{ backgroundColor: '#8b5cf6', color: 'white', padding: '15px 30px', border: 'none', marginTop: '20px', cursor: 'pointer' }}
+      >
+        START TALKING
+      </button>
+      {response && (
+        <div style={{ marginTop: '30px', padding: '20px', borderLeft: '4px solid #8b5cf6', textAlign: 'left', maxWidth: '80%', margin: '30px auto' }}>
+          {response}
+        </div>
+      )}
+    </div>
+  );
+}
