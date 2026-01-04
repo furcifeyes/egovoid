@@ -9,11 +9,16 @@ export async function POST(req: Request) {
     if (!apiKey) return NextResponse.json({ error: "Chiave assente" }, { status: 500 });
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Usiamo il nome base che non può dare 404
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // Forziamo la versione 'v1' per evitare il 404 della 'v1beta'
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash" 
+    }, { apiVersion: 'v1' }); 
     
     const result = await model.generateContent(message);
-    return NextResponse.json({ text: result.response.text() });
+    const response = await result.response;
+    
+    return NextResponse.json({ text: response.text() });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
