@@ -6,18 +6,15 @@ export async function POST(req: Request) {
     const { message } = await req.json();
     const apiKey = process.env.GEMINI_API_KEY;
 
-    if (!apiKey) return NextResponse.json({ error: "Chiave mancante" }, { status: 500 });
+    if (!apiKey) return NextResponse.json({ error: "Chiave assente" }, { status: 500 });
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Cambiamo il riferimento al modello per evitare il 404
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    // Usiamo il nome base che non può dare 404
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const result = await model.generateContent(message);
-    const response = await result.response;
-    
-    return NextResponse.json({ text: response.text() });
-  } catch (error: any) {
-    console.error("ERRORE GEMINI:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ text: result.response.text() });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
