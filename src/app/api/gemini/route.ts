@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -8,18 +7,23 @@ export async function POST(req: Request) {
 
     if (!apiKey) return NextResponse.json({ error: "Chiave assente" }, { status: 500 });
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // Forziamo la versione 'v1' per evitare il 404 della 'v1beta'
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash" 
-    }, { apiVersion: 'v1' }); 
-    
-    const result = await model.generateContent(message);
-    const response = await result.response;
-    
-    return NextResponse.json({ text: response.text() });
+    // Chiamata diretta all'endpoint V1 (non v1beta)
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: message }] }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Errore API Google");
+    }
+
+    return NextResponse.json({ text: data.candidates[0].content.parts[0].text });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: "L'Abisso non risponde: " + e.message }, { status: 500 });
   }
 }
