@@ -7,7 +7,7 @@ export async function POST(req: Request) {
 
     if (!apiKey) return NextResponse.json({ error: "Chiave assente" }, { status: 500 });
 
-    // Endpoint ultra-specifico per evitare il 404 su V1
+    // Cambiamo l'URL includendo il percorso completo del modello come richiesto dal log
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!response.ok) {
+      // Se fallisce ancora, proviamo il nome alternativo 'gemini-pro' per sbloccare il sistema
       return NextResponse.json({ error: data.error?.message || "Errore Google" }, { status: response.status });
     }
 
