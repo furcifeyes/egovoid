@@ -7,8 +7,8 @@ export async function POST(req: Request) {
 
     if (!apiKey) return NextResponse.json({ error: "Chiave assente" }, { status: 500 });
 
-    // Cambiamo l'URL includendo il percorso completo del modello come richiesto dal log
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Cambiamo il modello in 'gemini-pro', il più stabile per evitare il 404
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -21,12 +21,11 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!response.ok) {
-      // Se fallisce ancora, proviamo il nome alternativo 'gemini-pro' per sbloccare il sistema
       return NextResponse.json({ error: data.error?.message || "Errore Google" }, { status: response.status });
     }
 
     return NextResponse.json({ text: data.candidates[0].content.parts[0].text });
   } catch (e: any) {
-    return NextResponse.json({ error: "L'Abisso è ancora chiuso: " + e.message }, { status: 500 });
+    return NextResponse.json({ error: "Connessione fallita: " + e.message }, { status: 500 });
   }
 }
