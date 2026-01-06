@@ -24,7 +24,7 @@ export default function EgoVoid() {
       {/* BANNER */}
       <div style={{ width: '100%', height: '120px', overflow: 'hidden', marginBottom: '40px' }}>
         <img 
-          src="https://res.cloudinary.com/dyiumboth/image/upload/v1767741958/photo_2025-12-24_00-16-57_yj7pep_nk1abg.jpg" 
+          src="https://res.cloudinary.com/dyiumboth/image/upload/v1767742397/photo_2025-12-24_00-16-57_yj7pep_nk1abg.jpg" 
           alt="EgoVoid Banner" 
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
@@ -32,7 +32,7 @@ export default function EgoVoid() {
        {/* LOGO */}
  <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '30px' }}>
  <img 
- src="https://res.cloudinary.com/dyiumboth/image/upload/v1767741958/photo_2025-12-24_00-17-00_yisl_wd7sdd.jpg" 
+ src="https://res.cloudinary.com/dyiumboth/image/upload/v1767742397/photo_2025-12-24_00-17-00_yislbv_x081me.jpg" 
  alt="EgoVoid Logo" 
  style={{ width: '80px', height: '80px', objectFit: 'contain' }}
  />
