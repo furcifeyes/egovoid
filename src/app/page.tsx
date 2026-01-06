@@ -22,7 +22,7 @@ export default function EgoVoid() {
   return (
     <div style={{ backgroundColor: 'black', color: 'white', minHeight: '100vh', padding: '0', margin: '0' }}>
       {/* BANNER */}
-      <div style={{ width: '100%', height: '200px', overflow: 'hidden', marginBottom: '20px' }}>
+      <div style={{ width: '100%', height: '200px', overflow: 'hidden', marginBottom: '40px' }}>
         <img 
           src="https://res.cloudinary.com/dyiumboth/image/upload/v1767741958/photo_2025-12-24_00-16-57_yj7pep_nk1abg.jpg" 
           alt="EgoVoid Banner" 
@@ -32,17 +32,7 @@ export default function EgoVoid() {
 
       {/* MAIN CONTENT */}
       <div style={{ padding: '20px', textAlign: 'center' }}>
-        {/* LOGO E TITOLO */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '20px' }}>
-          <img 
-            src="https://res.cloudinary.com/dyiumboth/image/upload/v1767742397/photo_2025-12-24_00-17-00_yislbv_x081me.jpg" 
-            alt="EgoVoid Logo" 
-            style={{ width: '80px', height: '80px', objectFit: 'contain' }}
-          />
-          <h1 style={{ margin: '0', fontSize: '3em' }}>EGOVOID</h1>
-        </div>
-
-        <p style={{ color: '#8b5cf6', marginBottom: '30px' }}>IL TUO IO È UN MITO DA DECOSTRUIRE</p>
+        <p style={{ color: '#8b5cf6', marginBottom: '30px', fontSize: '1.1em' }}>IL TUO IO È UN MITO DA DECOSTRUIRE</p>
         
         <textarea 
           value={input} 
