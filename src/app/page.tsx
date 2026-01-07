@@ -177,6 +177,15 @@ export default function EgoVoid() {
         <div
           onClick={handleFasciculo}
           style={{
+                    {/* BANNER */}
+        <div style={{ width: '100%', height: '160px', overflow: 'hidden', marginBottom: '40px' }}>
+          <img
+            src="https://res.cloudinary.com/dyiumboth/image/upload/v1767745666/photo_2025-12-24_00-16-57_yj7pep__1_-removebg-preview_xjjnag.png"
+            alt="EgoVoid Banner"
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
+        </div>
+
             textAlign: 'center',
             marginBottom: '20px',
             marginTop: '20px',
