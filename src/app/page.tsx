@@ -41,16 +41,16 @@ export default function EgoVoid() {
 useEffect(() => {
     (async () => {
       await createSession();
-      loadSessions();
+          loadSessions(getUserId());
     })();
   }, []);
 
-  const loadSessions = async () => {
+   const loadSessions = async (userId?: string) => {
     try {
       const { data } = await supabase
         .from('chat_sessions')
         .select('*') // Filter by user ID
-                        .eq('user_id', localStorage.getItem('egovoid_userId') || 'default_user')
+                                    .eq('user_id', userId || getUserId())
         .order('created_at', { ascending: false });
       setSessions(data || []);
     } catch (e) {
