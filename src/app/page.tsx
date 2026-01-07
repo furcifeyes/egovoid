@@ -26,7 +26,7 @@ export default function EgoVoid() {
         <img 
           src="https://res.cloudinary.com/dyiumboth/image/upload/v1767742397/photo_2025-12-24_00-16-57_yj7pep_nk1abg.jpg" 
           alt="EgoVoid Banner" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         />
       </div>
        {/* LOGO */}
