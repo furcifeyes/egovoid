@@ -26,6 +26,7 @@ interface ChatSession {
   created_at: string;
   title?: string;
   archived?: boolean;
+    user_id: string;
 }
 
 export default function EgoVoid() {
@@ -38,13 +39,18 @@ export default function EgoVoid() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
 
-useEffect(() => {
-    (async () => {
-      await createSession();
-          loadSessions(getUserId());
-    })();
-  }, []);
+  const [userId, setUserId] = useState<string>('');
 
+  // Initialize user ID on component mount, then load existing sessions
+  useEffect(() => {
+    const initUser = async () => {
+      const uid = getUserId();
+      setUserId(uid);
+      await loadSessions(uid);
+      await createSession();
+    };
+    initUser();
+  }, []);
    const loadSessions = async (userId?: string) => {
     try {
       const { data } = await supabase
