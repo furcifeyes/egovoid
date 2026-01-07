@@ -21,6 +21,7 @@ interface ChatMessage {
 
 interface ChatSession {
   id: string;
+    session_id: string;
   created_at: string;
   title?: string;
   archived?: boolean;
@@ -88,7 +89,7 @@ useEffect(() => {
     const newSessionId = Date.now().toString();
     try {
       await supabase.from('chat_sessions').insert({
-        id: newSessionId,
+      session_id: newSessionId,
         created_at: new Date().toISOString(),
         title: initialTitle || undefined,
         archived: false
@@ -212,15 +213,15 @@ useEffect(() => {
         </button>
         <div style={{ overflowY: 'auto', flex: 1 }}>
           {sessions.map(session => (
-            <div key={session.id} style={{ marginBottom: '10px' }}>
-              {editingId === session.id ? (
+            <div key={session.session_id} style={{ marginBottom: '10px' }}>
+              {editingId === session.session_id ? (
                 <input
                   autoFocus
                   type="text"
                   value={editingTitle}
                   onChange={(e) => setEditingTitle(e.target.value)}
-                  onBlur={() => renameSession(session.id, editingTitle)}
-                  onKeyPress={(e) => e.key === 'Enter' && renameSession(session.id, editingTitle)}
+                  onBlur={() => renameSession(session.session_id, editingTitle)}
+                  onKeyPress={(e) => e.key === 'Enter' && renameSession(session.session_id, editingTitle)}
                   style={{
                     width: '100%',
                     padding: '8px',
@@ -232,14 +233,14 @@ useEffect(() => {
                 />
               ) : (
                 <div
-                  onClick={() => loadMessages(session.id)}
+                  onClick={() => loadMessages(session.session_id)}
                   onDoubleClick={() => {
                     setEditingId(session.id);
                     setEditingTitle(session.title || new Date(session.created_at).toLocaleDateString());
                   }}
                   style={{
                     padding: '10px',
-                    backgroundColor: sessionId === session.id ? '#8b5cf6' : '#2a2a2a',
+                    backgroundColor: sessionId === session.session_id ? '#8b5cf6' : '#2a2a2a',
                     marginBottom: '5px',
                     cursor: 'pointer',
                     borderRadius: '4px',
@@ -253,7 +254,7 @@ useEffect(() => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      archiveSession(session.id);
+                      archiveSession(session.session_id);
                     }}
                     style={{
                       backgroundColor: 'transparent',
