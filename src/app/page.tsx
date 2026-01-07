@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 export default function EgoVoid() {
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
+    const [fasciculo, setFasciculo] = useState('');
+
 
   const handleTalk = async () => {
     try {
@@ -19,6 +21,12 @@ export default function EgoVoid() {
     }
   };
 
+    const handleFasciculo = () => {
+    const fasciculoText = `FASCICULO SU DI TE\n---\nInput: ${input}\nRisposta: ${response}`;
+    setFasciculo(fasciculoText);
+    alert(fasciculoText);
+  };
+
   return (
     <div style={{ backgroundColor: 'black', color: 'white', minHeight: '100vh', padding: '0', margin: '0' }}>
       {/* BANNER */}
@@ -30,7 +38,7 @@ export default function EgoVoid() {
         />
       </div>
        {/* LOGO */}
- <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '30px' }}>
+ <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '30px' }}, cursor: 'pointer'> onClick={handleFasciculo}
  <img 
  src="https://res.cloudinary.com/dyiumboth/image/upload/v1767745666/photo_2025-12-24_00-17-00_yislbv_x081me-removebg-preview_pccrjc.png" 
  alt="EgoVoid Logo" 
