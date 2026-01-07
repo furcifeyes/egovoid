@@ -49,6 +49,7 @@ useEffect(() => {
       const { data } = await supabase
         .from('chat_sessions')
         .select('*')
+            .eq('user_id', userId)
         .order('created_at', { ascending: false });
       setSessions(data || []);
     } catch (e) {
@@ -92,7 +93,8 @@ useEffect(() => {
       session_id: newSessionId,
         created_at: new Date().toISOString(),
         title: initialTitle || undefined,
-        archived: false
+        archived: false,
+            user_id: userId
       });
       setSessionId(newSessionId);
       setMessages([]);
