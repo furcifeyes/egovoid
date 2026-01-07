@@ -86,6 +86,7 @@ export default function EgoVoid() {
     try {
       await supabase.from('chat_messages').insert({
         session_id: sid,
+            user_id: getUserId(),
         sender,
         content,
         created_at: new Date().toISOString()
@@ -184,6 +185,7 @@ export default function EgoVoid() {
       await supabase.from('chat_messages').insert({
         session_id: newSessionId,
         sender: 'sistema',
+              user_id: getUserId(),
         content: fasciculoText,
         created_at: new Date().toISOString()
       });
