@@ -49,7 +49,7 @@ useEffect(() => {
       const { data } = await supabase
         .from('chat_sessions')
         .select('*')
-            .eq('user_id', userIdlocalStorage.getItem('egovoid_userId') || 'default_user'
+                        .eq('user_id', localStorage.getItem('egovoid_userId') || 'default_user')
         .order('created_at', { ascending: false });
       setSessions(data || []);
     } catch (e) {
