@@ -109,7 +109,7 @@ useEffect(() => {
       await supabase
         .from('chat_sessions')
         .update({ title: newTitle })
-        .eq('id', sid);
+        .eq('session_id', sid);
       setEditingId(null);
       loadSessions();
     } catch (e) {
@@ -122,7 +122,7 @@ useEffect(() => {
       await supabase
         .from('chat_sessions')
         .update({ archived: true })
-        .eq('id', sid);
+        .eq('session_id', sid);
       if (sessionId === sid) {
         const newSessionId = Date.now().toString();
         await createSession();
@@ -235,7 +235,7 @@ useEffect(() => {
                 <div
                   onClick={() => loadMessages(session.session_id)}
                   onDoubleClick={() => {
-                    setEditingId(session.id);
+                    setEditingId(session.session_id);
                     setEditingTitle(session.title || new Date(session.created_at).toLocaleDateString());
                   }}
                   style={{
