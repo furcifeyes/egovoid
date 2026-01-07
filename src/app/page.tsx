@@ -161,7 +161,7 @@ useEffect(() => {
     const newSessionId = Date.now().toString();
     try {
       await supabase.from('chat_sessions').insert({
-        id: newSessionId,
+        session_id: newSessionId,
         created_at: new Date().toISOString(),
         title: `Fascicolo - ${new Date().toLocaleDateString()}`,
         archived: false
