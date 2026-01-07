@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -14,6 +13,8 @@ interface ChatMessage {
 interface ChatSession {
   id: string;
   created_at: string;
+  title?: string;
+  archived?: boolean;
 }
 
 export default function EgoVoid() {
@@ -23,15 +24,15 @@ export default function EgoVoid() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
-  // Initialize session on mount
   useEffect(() => {
     const newSessionId = Date.now().toString();
     setSessionId(newSessionId);
     loadSessions();
   }, []);
 
-  // Load all chat sessions
   const loadSessions = async () => {
     try {
       const { data } = await supabase
@@ -44,7 +45,6 @@ export default function EgoVoid() {
     }
   };
 
-  // Load messages for a session
   const loadMessages = async (sid: string) => {
     try {
       const { data } = await supabase
@@ -61,7 +61,6 @@ export default function EgoVoid() {
     }
   };
 
-  // Save message to Supabase
   const saveMessage = async (sid: string, sender: string, content: string) => {
     try {
       await supabase.from('chat_messages').insert({
@@ -75,13 +74,14 @@ export default function EgoVoid() {
     }
   };
 
-  // Create new session in Supabase
-  const createSession = async () => {
+  const createSession = async (initialTitle?: string) => {
     const newSessionId = Date.now().toString();
     try {
       await supabase.from('chat_sessions').insert({
         id: newSessionId,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        title: initialTitle || undefined,
+        archived: false
       });
       setSessionId(newSessionId);
       setMessages([]);
@@ -93,14 +93,41 @@ export default function EgoVoid() {
     }
   };
 
+  const renameSession = async (sid: string, newTitle: string) => {
+    try {
+      await supabase
+        .from('chat_sessions')
+        .update({ title: newTitle })
+        .eq('id', sid);
+      setEditingId(null);
+      loadSessions();
+    } catch (e) {
+      console.error('Error renaming session:', e);
+    }
+  };
+
+  const archiveSession = async (sid: string) => {
+    try {
+      await supabase
+        .from('chat_sessions')
+        .update({ archived: true })
+        .eq('id', sid);
+      if (sessionId === sid) {
+        const newSessionId = Date.now().toString();
+        await createSession();
+      }
+      loadSessions();
+    } catch (e) {
+      console.error('Error archiving session:', e);
+    }
+  };
+
   const handleTalk = async () => {
     if (!input.trim()) return;
     try {
-      // Save user input
       await saveMessage(sessionId, 'user', input);
       setMessages([...messages, { id: Date.now().toString(), session_id: sessionId, sender: 'user', content: input, created_at: new Date().toISOString() }]);
-
-      // Get AI response
+      
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -109,8 +136,6 @@ export default function EgoVoid() {
       const data = await res.json();
       const aiResponse = data.text || data.error;
       setResponse(aiResponse);
-
-      // Save AI response
       await saveMessage(sessionId, 'egovoid', aiResponse);
       setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), session_id: sessionId, sender: 'egovoid', content: aiResponse, created_at: new Date().toISOString() }]);
       setInput('');
@@ -119,9 +144,33 @@ export default function EgoVoid() {
     }
   };
 
-  const handleFasciculo = () => {
+  const handleFasciculo = async () => {
     const fasciculoText = `FASCICOLO SU DI TE\n---\nSessione: ${sessionId}\nMessaggi:\n${messages.map(m => `${m.sender}: ${m.content}`).join('\n\n')}`;
-    alert(fasciculoText);
+    
+    const newSessionId = Date.now().toString();
+    try {
+      await supabase.from('chat_sessions').insert({
+        id: newSessionId,
+        created_at: new Date().toISOString(),
+        title: `Fascicolo - ${new Date().toLocaleDateString()}`,
+        archived: false
+      });
+      
+      await supabase.from('chat_messages').insert({
+        session_id: newSessionId,
+        sender: 'sistema',
+        content: fasciculoText,
+        created_at: new Date().toISOString()
+      });
+      
+      setSessionId(newSessionId);
+      setMessages([{ id: Date.now().toString(), session_id: newSessionId, sender: 'sistema', content: fasciculoText, created_at: new Date().toISOString() }]);
+      setInput('');
+      setResponse('');
+      loadSessions();
+    } catch (e) {
+      console.error('Error creating fascicolo:', e);
+    }
   };
 
   return (
@@ -138,7 +187,7 @@ export default function EgoVoid() {
         padding: showSidebar ? '20px' : '0'
       }}>
         <button
-          onClick={createSession}
+          onClick={() => createSession()}
           style={{
             backgroundColor: '#8b5cf6',
             color: 'white',
@@ -152,28 +201,71 @@ export default function EgoVoid() {
           NUOVA CHAT
         </button>
         <div style={{ overflowY: 'auto', flex: 1 }}>
-          {sessions.map(session => (
-            <div
-              key={session.id}
-              onClick={() => loadMessages(session.id)}
-              style={{
-                padding: '10px',
-                backgroundColor: sessionId === session.id ? '#8b5cf6' : '#2a2a2a',
-                marginBottom: '5px',
-                cursor: 'pointer',
-                borderRadius: '4px',
-                fontSize: '0.9em'
-              }}
-            >
-              {new Date(session.created_at).toLocaleDateString()}
+          {sessions.filter(s => !s.archived).map(session => (
+            <div key={session.id} style={{ marginBottom: '10px' }}>
+              {editingId === session.id ? (
+                <input
+                  autoFocus
+                  type="text"
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  onBlur={() => renameSession(session.id, editingTitle)}
+                  onKeyPress={(e) => e.key === 'Enter' && renameSession(session.id, editingTitle)}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    backgroundColor: '#2a2a2a',
+                    color: 'white',
+                    border: '1px solid #8b5cf6',
+                    borderRadius: '4px'
+                  }}
+                />
+              ) : (
+                <div
+                  onClick={() => loadMessages(session.id)}
+                  onDoubleClick={() => {
+                    setEditingId(session.id);
+                    setEditingTitle(session.title || new Date(session.created_at).toLocaleDateString());
+                  }}
+                  style={{
+                    padding: '10px',
+                    backgroundColor: sessionId === session.id ? '#8b5cf6' : '#2a2a2a',
+                    marginBottom: '5px',
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    fontSize: '0.9em',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <span>{session.title || new Date(session.created_at).toLocaleDateString()}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      archiveSession(session.id);
+                    }}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      color: '#a78bfa',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      fontSize: '0.8em'
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
 
       {/* MAIN CONTENT */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                {/* BANNER */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', alignItems: 'center' }}>
+        {/* BANNER */}
         <div style={{ width: '100%', height: '160px', overflow: 'hidden', marginBottom: '40px' }}>
           <img
             src="https://res.cloudinary.com/dyiumboth/image/upload/v1767745666/photo_2025-12-24_00-16-57_yj7pep__1_-removebg-preview_xjjnag.png"
@@ -181,17 +273,20 @@ export default function EgoVoid() {
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         </div>
-        {/* LOGO - CLICKABLE FOR FASCICOLO */}
+
+        {/* LOGO - CLICKABLE FOR FASCICOLO - CENTERED */}
         <div
           onClick={handleFasciculo}
           style={{
-            position: 'relative'
-              }}
+            position: 'relative',
+            textAlign: 'center',
+            marginBottom: '20px'
+          }}
         >
           <img
             src="https://res.cloudinary.com/dyiumboth/image/upload/v1767745666/photo_2025-12-24_00-17-00_yislbv_x081me-removebg-preview_pccrjc.png"
             alt="EgoVoid Logo"
-            style={{ width: '80px', height: '80px', objectFit: 'contain' }}
+            style={{ width: '80px', height: '80px', objectFit: 'contain', cursor: 'pointer' }}
           />
 
           {/* SIDEBAR TOGGLE */}
@@ -199,8 +294,8 @@ export default function EgoVoid() {
             onClick={(e) => { e.stopPropagation(); setShowSidebar(!showSidebar); }}
             style={{
               position: 'absolute',
-              left: showSidebar ? '200px' : '20px',
-              top: '10px',
+              left: '20px',
+              top: '-50px',
               backgroundColor: '#8b5cf6',
               color: 'white',
               border: 'none',
@@ -216,7 +311,7 @@ export default function EgoVoid() {
         </div>
 
         {/* MAIN CONTENT AREA */}
-        <div style={{ padding: '20px', textAlign: 'center', flex: 1, overflowY: 'auto' }}>
+        <div style={{ padding: '20px', textAlign: 'center', flex: 1, overflowY: 'auto', width: '100%' }}>
           <p style={{ color: '#8b5cf6', marginBottom: '30px', fontSize: '1.1em' }}>IL TUO IO E UN MITO DA DECOSTRUIRE</p>
 
           {/* CHAT HISTORY */}
@@ -243,7 +338,6 @@ export default function EgoVoid() {
             }}
             onKeyPress={(e) => { if (e.key === 'Enter' && e.ctrlKey) handleTalk(); }}
           />
-
           <button
             onClick={handleTalk}
             style={{
