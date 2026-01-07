@@ -36,8 +36,12 @@ export default function EgoVoid() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
 
-  useEffect(() => {
-createSession(); loadSessions(); }, []);
+useEffect(() => {
+    (async () => {
+      await createSession();
+      loadSessions();
+    })();
+  }, []);
 
   const loadSessions = async () => {
     try {
