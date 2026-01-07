@@ -198,7 +198,7 @@ createSession();  }, []);
           NUOVA CHAT
         </button>
         <div style={{ overflowY: 'auto', flex: 1 }}>
-          {sessions.filter(s => !s.archived).map(session => (
+          {sessions.map(session => (
             <div key={session.id} style={{ marginBottom: '10px' }}>
               {editingId === session.id ? (
                 <input
