@@ -48,7 +48,7 @@ useEffect(() => {
     try {
       const { data } = await supabase
         .from('chat_sessions')
-        .select('*')
+        .select('*') // Filter by user ID
                         .eq('user_id', localStorage.getItem('egovoid_userId') || 'default_user')
         .order('created_at', { ascending: false });
       setSessions(data || []);
