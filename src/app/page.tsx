@@ -22,7 +22,7 @@ export default function EgoVoid() {
   return (
     <div style={{ backgroundColor: 'black', color: 'white', minHeight: '100vh', padding: '0', margin: '0' }}>
       {/* BANNER */}
-      <div style={{ width: '100%', height: '70px', overflow: 'hidden', marginBottom: '40px' }}>
+      <div style={{ width: '100%', height: '160px', overflow: 'hidden', marginBottom: '40px' }}>
         <img 
           src="https://res.cloudinary.com/dyiumboth/image/upload/v1767742397/photo_2025-12-24_00-16-57_yj7pep_nk1abg.jpg" 
           alt="EgoVoid Banner" 
