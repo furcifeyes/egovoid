@@ -185,12 +185,8 @@ export default function EgoVoid() {
         <div
           onClick={handleFasciculo}
           style={{
-                    {/* BANNER */}
-        <div style={{ width: '100%', height: '160px', overflow: 'hidden', marginBottom: '40px' }}>
-          <img
-            src="https://res.cloudinary.com/dyiumboth/image/upload/v1767745666/photo_2025-12-24_00-16-57_yj7pep__1_-removebg-preview_xjjnag.png"
             position: 'relative'
-          }}
+              }}
         >
           <img
             src="https://res.cloudinary.com/dyiumboth/image/upload/v1767745666/photo_2025-12-24_00-17-00_yislbv_x081me-removebg-preview_pccrjc.png"
