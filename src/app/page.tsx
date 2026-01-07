@@ -95,7 +95,7 @@ useEffect(() => {
         created_at: new Date().toISOString(),
         title: initialTitle || undefined,
         archived: false,
-            user_id: userId
+            user_id: getUserId()
       });
       setSessionId(newSessionId);
       setMessages([]);
@@ -167,7 +167,8 @@ useEffect(() => {
         session_id: newSessionId,
         created_at: new Date().toISOString(),
         title: `Fascicolo - ${new Date().toLocaleDateString()}`,
-        archived: false
+        archived: false,
+            user_id: getUserId()
       });
       
       await supabase.from('chat_messages').insert({
