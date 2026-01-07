@@ -371,7 +371,7 @@ export default function EgoVoid() {
               borderRadius: '4px'
             }}
           >
-            START TALKING
+            →
           </button>
         </div>
       </div>
