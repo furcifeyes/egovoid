@@ -112,9 +112,7 @@ export default function EgoVoid() {
       setResponse('');
       loadSessions();
     } catch (e) {
-      console.error('Error creating session:', e);
-          throw e;150
-      
+      console.error('Error creating session:', e);      
     }
   };
 
