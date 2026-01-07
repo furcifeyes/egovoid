@@ -1,6 +1,15 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+const getUserId = () => {
+  if (typeof window === 'undefined') return '';
+  let userId = localStorage.getItem('egovoid_userId');
+  if (!userId) {
+    userId = 'user_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('egovoid_userId', userId);
+  }
+  return userId;
+};
 
 interface ChatMessage {
   id: string;
