@@ -80,7 +80,9 @@ export default function EgoVoid() {
     }
   };
 
-  const saveMessage = async (sid: string, sender: string, content: string) => {
+  85
+    83
+      = async (sid: string, sender: string, content: string) => {
     try {
       await supabase.from('chat_messages').insert({
         session_id: sid,
@@ -90,6 +92,7 @@ export default function EgoVoid() {
       });
     } catch (e) {
       console.error('Error saving message:', e);
+          throw e;
     }
   };
 
@@ -110,6 +113,8 @@ export default function EgoVoid() {
       loadSessions();
     } catch (e) {
       console.error('Error creating session:', e);
+          throw e;150
+      
     }
   };
 
@@ -160,6 +165,7 @@ export default function EgoVoid() {
       setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), session_id: sessionId, sender: 'egovoid', content: aiResponse, created_at: new Date().toISOString() }]);
       setInput('');
     } catch (e) {
+          alert('Errore: ' + (e instanceof Error ? e.message : JSON.stringify(e)));
       setResponse('Errore di connessione all\'Abisso.');
     }
   };
