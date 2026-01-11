@@ -1,6 +1,4 @@
-export const dynamic = 'force-dynamic';
-'use client';
-
+import 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -11,7 +9,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function Signup() {
+function SignupClient() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -61,4 +59,8 @@ export default function Signup() {
       </div>
     </div>
   );
+}
+
+export default function SignupPage() {
+  return <SignupClient />;
 }

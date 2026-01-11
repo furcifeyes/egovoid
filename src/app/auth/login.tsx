@@ -1,5 +1,4 @@
-'use client';
-
+import 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -10,7 +9,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function Login() {
+function LoginClient() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,7 +24,6 @@ export default function Login() {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-
       if (data?.session) {
         localStorage.setItem('egovoid_session', JSON.stringify(data.session));
         localStorage.setItem('egovoid_userId', data.session.user.id);
@@ -62,4 +60,8 @@ export default function Login() {
       </div>
     </div>
   );
+}
+
+export default function LoginPage() {
+  return <LoginClient />;
 }
