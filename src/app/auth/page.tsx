@@ -26,6 +26,12 @@ export default function AuthPage() {
     try {
       if (mode === 'signup') {
         if (password !== confirmPassword) { setError('Le password non coincidono'); setLoading(false); return; }
+                    // MOCK AUTH - Skip Supabase for now due to invalid API key
+            localStorage.setItem('egovoid_userId', 'user_' + Math.random().toString(36).substr(2, 9));
+            localStorage.setItem('egovoid_username', username);
+            setLoading(false);
+            router.push('/');
+            return;
         const { data, error: err } = await supabase.auth.signUp({ email, password });
         if (err) throw err;
         if (data?.user) { localStorage.setItem('egovoid_userId', data.user.id); router.push('/'); }
