@@ -11,6 +11,7 @@ const supabase = createClient(
 
 function SignupClient() {
   const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,9 @@ function SignupClient() {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
       if (data?.user) { localStorage.setItem('egovoid_userId', data.user.id); router.push('/'); }
+                if (data?.user?.id) {
+            await supabase.from('users').upsert({ id: data.user.id, username }, { onConflict: 'id' });
+          }
     } catch (err: any) { setError(err.message || 'Errore durante la registrazione'); } finally { setLoading(false); }
   };
 
@@ -36,6 +40,10 @@ function SignupClient() {
       <div style={{ background: '#1a1a1a', padding: '40px', borderRadius: '10px', border: '2px solid #8b5cf6', maxWidth: '400px', width: '100%' }}>
         <h1 style={{ color: '#d946ef', textAlign: 'center', marginBottom: '30px', fontSize: '2.5rem' }}>EgoVoid</h1>
         <form onSubmit={handleSignup}>
+                  <div style={{ marginBottom: '20px' }}>
+          <label style={{ color: '#a78bfa', display: 'block', marginBottom: '8px' }}>Username</label>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Scegli un username" style={{ width: '100%', padding: '12px', background: '#1a1a1a', color: '#fff', border: '2px solid #8b5cf6' }} />
+        </div>
           <div style={{ marginBottom: '20px' }}>
             <label style={{ color: '#a78bfa', display: 'block', marginBottom: '8px' }}>Email</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tuo@email.com" required style={{ width: '100%', padding: '12px', background: '#2a2a2a', border: '1px solid #8b5cf6', borderRadius: '5px', color: '#fff', boxSizing: 'border-box' }} />
