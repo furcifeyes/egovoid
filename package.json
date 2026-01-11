@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@google/generative-ai": "latest",
-        "@supabase/supabase-js": "latest",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "latest",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest"
