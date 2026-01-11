@@ -13,6 +13,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+    const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function AuthPage() {
         const { data, error: err } = await supabase.auth.signUp({ email, password });
         if (err) throw err;
         if (data?.user) { localStorage.setItem('egovoid_userId', data.user.id); router.push('/'); }
+                      await supabase.from('users').upsert({ id: data.user.id, username }, { onConflict: 'id' });
       } else {
         const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) throw err;
@@ -53,6 +55,10 @@ export default function AuthPage() {
           </button>
         </div>
         <form onSubmit={handleAuth}>
+                  <div style={{ marginBottom: '20px' }}>
+          <label style={{ color: '#a78bfa', display: 'block', marginBottom: '8px' }}>Username</label>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Scegli un username" style={{ width: '100%', padding: '12px', background: '#1a1a1a', color: '#fff', border: '2px solid #8b5cf6' }} />
+        </div>
           <div style={{ marginBottom: '20px' }}>
             <label style={{ color: '#a78bfa', display: 'block', marginBottom: '8px' }}>Email</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tuo@email.com" required style={{ width: '100%', padding: '12px', background: '#2a2a2a', border: '1px solid #8b5cf6', borderRadius: '5px', color: '#fff', boxSizing: 'border-box' }} />
