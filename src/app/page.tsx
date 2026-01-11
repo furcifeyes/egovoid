@@ -333,7 +333,7 @@ export default function EgoVoid() {
 
         {/* MAIN CONTENT AREA */}
         <div style={{ padding: '20px', textAlign: 'center', flex: 1, overflowY: 'auto', width: '100%' }}>
-          <p style={{ color: '#8b5cf6', marginBottom: '30px', fontSize: '1.1em' }}>IL TUO IO E UN MITO DA DECOSTRUIRE</p>
+          <p style={{ color: '#8b5cf6', marginBottom: '30px', fontSize: '1.1em' }}>LA RICERCA DELLA CONSAPEVOLEZZA</p>
 
           {/* CHAT HISTORY */}
           <div style={{ maxWidth: '80%', margin: '0 auto 30px', maxHeight: '300px', overflowY: 'auto', textAlign: 'left' }}>
