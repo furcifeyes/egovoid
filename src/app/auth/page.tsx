@@ -29,7 +29,7 @@ export default function AuthPage() {
         const { data, error: err } = await supabase.auth.signUp({ email, password });
         if (err) throw err;
         if (data?.user) { localStorage.setItem('egovoid_userId', data.user.id); router.push('/'); }
-                      await supabase.from('users').upsert({ id: data.user.id, username }, { onConflict: 'id' });
+//                       await supabase.from('users').upsert({ id: data.user.id, username }, { onConflict: 'id' });
       } else {
         const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) throw err;
