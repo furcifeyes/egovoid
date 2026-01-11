@@ -31,10 +31,23 @@ Ora rispondi all'ultimo messaggio: "${lastUserMessage}"
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const result = await model.generateContent(systemPrompt);
-    const reply = result.response.text()?.trim() || 'Nessuna risposta ricevuta.';
+
+    // Parsing corretto e sicuro
+    let reply = '';
+    if (result.response.candidates && result.response.candidates[0]) {
+      const candidate = result.response.candidates[0];
+      if (candidate.content && candidate.content.parts && candidate.content.parts[0]) {
+        reply = candidate.content.parts[0].text?.trim() || 'Nessuna risposta ricevuta.';
+      }
+    }
+
+    if (!reply) {
+      reply = 'Errore: risposta vuota dal modello. Riprova con un prompt più chiaro.';
+    }
 
     return NextResponse.json({ reply });
   } catch (error) {
     console.error('Gemini error:', error);
-    return NextResponse.json({ reply: 'Errore interno.' }, { status: 500 });
-  }}
+    return NextResponse.json({ reply: 'Errore interno: controlla la chiave API o la quota.' }, { status: 500 });
+  }
+}
