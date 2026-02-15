@@ -25,6 +25,9 @@ export default function EgoVoid() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [fascicolo, setFascicolo] = useState<string>('');
+  const [showFascicolo, setShowFascicolo] = useState(false);
+  const [generatingFascicolo, setGeneratingFascicolo] = useState(false);
 
   useEffect(() => {
     const savedSessionId = localStorage.getItem('egovoid_current_session');
@@ -141,14 +144,12 @@ export default function EgoVoid() {
     }
   };
 
-  // NUOVA: Elimina singola sessione
   const deleteSession = async (sid: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Evita che clicchi sulla sessione
+    e.stopPropagation();
     
     if (!confirm('Eliminare questa sessione?')) return;
     
     try {
-      // Elimina sessione (CASCADE elimina anche i messaggi)
       const { error } = await supabase
         .from('sessions')
         .delete()
@@ -156,13 +157,11 @@ export default function EgoVoid() {
       
       if (error) throw error;
       
-      // Se era la sessione corrente, crea nuova sessione
       if (sid === sessionId) {
         localStorage.removeItem('egovoid_current_session');
         await initializeSession();
       }
       
-      // Ricarica lista sessioni
       loadSessions();
     } catch (err) {
       console.error('Error deleting session:', err);
@@ -170,23 +169,19 @@ export default function EgoVoid() {
     }
   };
 
-  // NUOVA: Reset completo (dissolvi tutto)
   const resetAll = async () => {
     if (!confirm('DISSOLVI TUTTO? Tutte le sessioni e messaggi saranno eliminati permanentemente.')) return;
     
     try {
-      // Elimina TUTTE le sessioni (CASCADE elimina tutti i messaggi)
       const { error } = await supabase
         .from('sessions')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Elimina tutto
+        .neq('id', '00000000-0000-0000-0000-000000000000');
       
       if (error) throw error;
       
-      // Pulisci localStorage
       localStorage.removeItem('egovoid_current_session');
       
-      // Crea nuova sessione pulita
       setMessages([]);
       setSessions([]);
       await initializeSession();
@@ -250,9 +245,89 @@ export default function EgoVoid() {
     }
   };
 
-  const handleFasciculo = () => {
-    const fasciculoText = `FASCICOLO SU DI TE\n---\nSessione: ${sessionId}\nMessaggi:\n${messages.map(m => `${m.sender}: ${m.content}`).join('\n\n')}`;
-    alert(fasciculoText);
+  // NUOVA: Genera fascicolo psicologico
+  const handleFasciculo = async () => {
+    if (messages.length < 4) {
+      alert('Servono almeno 4 messaggi per generare un fascicolo significativo.');
+      return;
+    }
+
+    setGeneratingFascicolo(true);
+    setShowFascicolo(true);
+    setFascicolo('Analizzando...');
+
+    try {
+      // Prepara trascrizione conversazione
+      const trascrizione = messages
+        .map(m => `${m.sender.toUpperCase()}: ${m.content}`)
+        .join('\n\n');
+
+      const promptAnalisi = `Sei uno psicologo clinico specializzato in analisi di trascrizioni. Analizza questa conversazione e genera un REFERTO PSICOLOGICO STRUTTURATO.
+
+TRASCRIZIONE:
+${trascrizione}
+
+GENERA UN REFERTO CON QUESTE SEZIONI:
+
+## 1. BIAS COGNITIVI RILEVATI
+Identifica bias specifici con esempi dalla conversazione (confirmation bias, availability bias, sunk cost fallacy, etc.)
+
+## 2. PATTERN EMOTIVI RICORRENTI
+Emozioni dominanti (rabbia, paura, vuoto, vergogna, ansia) con intensità e frequenza
+
+## 3. TRAUMI E FERITE PSICOLOGICHE
+Eventi o esperienze dolorose emerse, anche se non esplicitate direttamente
+
+## 4. CONTRADDIZIONI IDENTITARIE
+Discrepanze tra ciò che l'utente dice di essere/voler essere e ciò che emerge dai comportamenti
+
+## 5. MECCANISMI DI DIFESA E FUGA
+Strategie di evitamento (lavoro, social, sostanze, razionalizzazioni, negazione)
+
+## 6. NARRAZIONI IDENTITARIE
+Frasi tipo "sono una persona che..." - come l'utente si definisce
+
+## 7. AREE DI LAVORO SUGGERITE
+3-5 aree concrete su cui l'utente potrebbe lavorare per crescita personale
+
+STILE DEL REFERTO:
+- Diretto, clinico, ma empatico
+- Evidenze specifiche dalla conversazione
+- NO giudizi morali, solo osservazioni cliniche
+- Linguaggio tecnico ma comprensibile
+- Lunghezza: report completo e approfondito
+
+Rispondi SOLO con il referto strutturato, niente preamboli.`;
+
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: promptAnalisi })
+      });
+
+      const data = await res.json();
+      const report = data.text || 'Errore nella generazione del fascicolo';
+      
+      setFascicolo(report);
+      setGeneratingFascicolo(false);
+
+    } catch (err) {
+      console.error('Error generating fascicolo:', err);
+      setFascicolo('Errore durante la generazione del fascicolo.');
+      setGeneratingFascicolo(false);
+    }
+  };
+
+  const downloadFascicolo = () => {
+    const blob = new Blob([fascicolo], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fascicolo-${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -281,7 +356,6 @@ export default function EgoVoid() {
         <div style={{ width: showSidebar ? '250px' : '0', backgroundColor: '#1a1a1a', overflow: 'hidden', transition: 'width 0.3s', borderRight: '1px solid #8b5cf6', display: 'flex', flexDirection: 'column', padding: showSidebar ? '20px' : '0' }}>
           <button onClick={createSession} style={{ backgroundColor: '#8b5cf6', color: 'white', padding: '10px', border: 'none', marginBottom: '10px', cursor: 'pointer', borderRadius: '4px' }}>NUOVA CHAT</button>
           
-          {/* PULSANTE RESET */}
           <button onClick={resetAll} style={{ backgroundColor: '#dc2626', color: 'white', padding: '8px', border: 'none', marginBottom: '20px', cursor: 'pointer', borderRadius: '4px', fontSize: '0.85em' }}>DISSOLVI TUTTO</button>
           
           <div style={{ overflowY: 'auto', flex: 1 }}>
@@ -290,7 +364,6 @@ export default function EgoVoid() {
                 <div onClick={() => loadMessages(session.id)} style={{ flex: 1, cursor: 'pointer' }}>
                   {new Date(session.created_at).toLocaleDateString()}
                 </div>
-                {/* ICONA ELIMINA */}
                 <button 
                   onClick={(e) => deleteSession(session.id, e)}
                   style={{ 
@@ -313,6 +386,28 @@ export default function EgoVoid() {
         {/* MAIN CONTENT */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
           <button onClick={() => setShowSidebar(!showSidebar)} style={{ position: 'absolute', left: '20px', top: '20px', backgroundColor: '#8b5cf6', color: 'white', border: 'none', padding: '8px 12px', cursor: 'pointer', borderRadius: '4px', fontSize: '0.8em', zIndex: 10 }}>{showSidebar ? '✕' : '☰'}</button>
+
+          {/* MODAL FASCICOLO */}
+          {showFascicolo && (
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 20, display: 'flex', flexDirection: 'column', padding: '40px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h2 style={{ color: '#8b5cf6', margin: 0 }}>FASCICOLO PSICOLOGICO</h2>
+                <div>
+                  <button onClick={downloadFascicolo} disabled={generatingFascicolo} style={{ backgroundColor: '#8b5cf6', color: 'white', padding: '8px 16px', border: 'none', cursor: 'pointer', borderRadius: '4px', marginRight: '10px' }}>
+                    📥 Scarica
+                  </button>
+                  <button onClick={() => setShowFascicolo(false)} style={{ backgroundColor: '#666', color: 'white', padding: '8px 16px', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
+                    ✕ Chiudi
+                  </button>
+                </div>
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#1a1a1a', padding: '30px', borderRadius: '8px', border: '1px solid #8b5cf6' }}>
+                <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'system-ui', lineHeight: '1.6', color: '#ddd', fontSize: '0.95em' }}>
+                  {fascicolo}
+                </pre>
+              </div>
+            </div>
+          )}
 
           <div style={{ padding: '20px', paddingTop: '60px', textAlign: 'center', flex: 1, overflowY: 'auto' }}>
             <p style={{ color: '#8b5cf6', marginBottom: '30px', fontSize: '1.1em' }}>IL TUO IO E UN MITO DA DECOSTRUIRE</p>
