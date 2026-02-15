@@ -17,6 +17,7 @@ interface ChatSession {
   created_at: string;
   last_active: string;
   user_id?: string;
+  title?: string;
 }
 
 export default function EgoVoid() {
@@ -37,30 +38,55 @@ export default function EgoVoid() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
+  // RENAME STATE
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+
+  // Check auth state (runs once on mount)
   useEffect(() => {
-    // Check auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setAuthInitialized(true);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Initialize session and load sessions (runs when auth is ready)
+  useEffect(() => {
+    if (!authInitialized) return;
+
     const savedSessionId = localStorage.getItem('egovoid_current_session');
     
     if (savedSessionId) {
-      setSessionId(savedSessionId);
-      loadMessages(savedSessionId);
+      // Verifica che la sessione esista ancora
+      supabase
+        .from('sessions')
+        .select('id')
+        .eq('id', savedSessionId)
+        .single()
+        .then(({ data, error }) => {
+          if (data && !error) {
+            setSessionId(savedSessionId);
+            loadMessages(savedSessionId);
+          } else {
+            // Sessione non esiste più, creane una nuova
+            localStorage.removeItem('egovoid_current_session');
+            initializeSession();
+          }
+        });
     } else {
       initializeSession();
     }
     
     loadSessions();
-
-    return () => subscription.unsubscribe();
-  }, []);
+  }, [authInitialized, user]);
 
   const initializeSession = async () => {
     try {
@@ -92,11 +118,9 @@ export default function EgoVoid() {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      // Se autenticato, prendi solo le sue sessioni
       if (user) {
         query = query.eq('user_id', user.id);
       } else {
-        // Se anonimo, prendi solo sessioni senza user_id
         query = query.is('user_id', null);
       }
       
@@ -233,6 +257,41 @@ export default function EgoVoid() {
     }
   };
 
+  // RENAME FUNCTIONS
+  const startRename = (sid: string, currentTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingSessionId(sid);
+    setEditingTitle(currentTitle || '');
+  };
+
+  const saveRename = async (sid: string) => {
+    if (!editingTitle.trim()) {
+      setEditingSessionId(null);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .update({ title: editingTitle.trim() })
+        .eq('id', sid);
+
+      if (error) throw error;
+
+      loadSessions();
+      setEditingSessionId(null);
+      setEditingTitle('');
+    } catch (err) {
+      console.error('Error renaming session:', err);
+      alert('Errore durante il rinomina');
+    }
+  };
+
+  const cancelRename = () => {
+    setEditingSessionId(null);
+    setEditingTitle('');
+  };
+
   // AUTH FUNCTIONS
   const handleSignup = async () => {
     setAuthLoading(true);
@@ -269,7 +328,6 @@ export default function EgoVoid() {
       setEmail('');
       setPassword('');
       
-      // Ricarica sessioni dell'utente
       loadSessions();
     } catch (err: any) {
       alert(err.message || 'Errore durante il login');
@@ -421,6 +479,11 @@ Rispondi SOLO con il referto strutturato, niente preamboli.`;
     URL.revokeObjectURL(url);
   };
 
+  const getSessionDisplayName = (session: ChatSession) => {
+    if (session.title) return session.title;
+    return new Date(session.created_at).toLocaleDateString();
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'black', color: 'white' }}>
       {/* BANNER */}
@@ -513,9 +576,29 @@ Rispondi SOLO con il referto strutturato, niente preamboli.`;
           <div style={{ overflowY: 'auto', flex: 1 }}>
             {sessions.map(session => (
               <div key={session.id} style={{ display: 'flex', alignItems: 'center', padding: '10px', backgroundColor: sessionId === session.id ? '#8b5cf6' : '#2a2a2a', marginBottom: '5px', borderRadius: '4px', fontSize: '0.9em' }}>
-                <div onClick={() => loadMessages(session.id)} style={{ flex: 1, cursor: 'pointer' }}>
-                  {new Date(session.created_at).toLocaleDateString()}
-                </div>
+                {editingSessionId === session.id ? (
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onBlur={() => saveRename(session.id)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') saveRename(session.id);
+                      if (e.key === 'Escape') cancelRename();
+                    }}
+                    autoFocus
+                    style={{ flex: 1, backgroundColor: '#1a1a1a', color: 'white', border: '1px solid #8b5cf6', padding: '5px', borderRadius: '3px' }}
+                  />
+                ) : (
+                  <div
+                    onClick={() => loadMessages(session.id)}
+                    onDoubleClick={(e) => startRename(session.id, session.title || '', e)}
+                    style={{ flex: 1, cursor: 'pointer' }}
+                    title="Doppio click per rinominare"
+                  >
+                    {getSessionDisplayName(session)}
+                  </div>
+                )}
                 <button 
                   onClick={(e) => deleteSession(session.id, e)}
                   style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', fontSize: '1.2em', padding: '0 5px' }}
