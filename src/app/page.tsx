@@ -26,23 +26,19 @@ export default function EgoVoid() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [showSidebar, setShowSidebar] = useState(false);
 
-  // Initialize session on mount with localStorage persistence
   useEffect(() => {
     const savedSessionId = localStorage.getItem('egovoid_current_session');
     
     if (savedSessionId) {
-      // Resume existing session
       setSessionId(savedSessionId);
       loadMessages(savedSessionId);
     } else {
-      // Create new session
       initializeSession();
     }
     
     loadSessions();
   }, []);
 
-  // Create new session in Supabase
   const initializeSession = async () => {
     try {
       const { data, error } = await supabase
@@ -54,19 +50,16 @@ export default function EgoVoid() {
       if (error) throw error;
       if (data) {
         setSessionId(data.id);
-        // Save to localStorage
         localStorage.setItem('egovoid_current_session', data.id);
       }
     } catch (e) {
       console.error('Error creating session:', e);
-      // Fallback: usa un ID locale se Supabase fallisce
       const fallbackId = Date.now().toString();
       setSessionId(fallbackId);
       localStorage.setItem('egovoid_current_session', fallbackId);
     }
   };
 
-  // Load all chat sessions
   const loadSessions = async () => {
     try {
       const { data, error } = await supabase
@@ -82,7 +75,6 @@ export default function EgoVoid() {
     }
   };
 
-  // Load messages for a session
   const loadMessages = async (sid: string) => {
     try {
       const { data, error } = await supabase
@@ -97,10 +89,8 @@ export default function EgoVoid() {
       setInput('');
       setResponse('');
       
-      // Update localStorage to current session
       localStorage.setItem('egovoid_current_session', sid);
       
-      // Update last_active
       await supabase
         .from('sessions')
         .update({ last_active: new Date().toISOString() })
@@ -110,7 +100,6 @@ export default function EgoVoid() {
     }
   };
 
-  // Save message to Supabase
   const saveMessage = async (sid: string, sender: string, content: string, route: string = 'gemini') => {
     try {
       const { error } = await supabase
@@ -128,7 +117,6 @@ export default function EgoVoid() {
     }
   };
 
-  // Create new session
   const createSession = async () => {
     try {
       const { data, error } = await supabase
@@ -144,7 +132,6 @@ export default function EgoVoid() {
         setInput('');
         setResponse('');
         
-        // Save new session to localStorage
         localStorage.setItem('egovoid_current_session', data.id);
         
         loadSessions();
@@ -154,14 +141,70 @@ export default function EgoVoid() {
     }
   };
 
+  // NUOVA: Elimina singola sessione
+  const deleteSession = async (sid: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Evita che clicchi sulla sessione
+    
+    if (!confirm('Eliminare questa sessione?')) return;
+    
+    try {
+      // Elimina sessione (CASCADE elimina anche i messaggi)
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('id', sid);
+      
+      if (error) throw error;
+      
+      // Se era la sessione corrente, crea nuova sessione
+      if (sid === sessionId) {
+        localStorage.removeItem('egovoid_current_session');
+        await initializeSession();
+      }
+      
+      // Ricarica lista sessioni
+      loadSessions();
+    } catch (err) {
+      console.error('Error deleting session:', err);
+      alert('Errore durante l\'eliminazione');
+    }
+  };
+
+  // NUOVA: Reset completo (dissolvi tutto)
+  const resetAll = async () => {
+    if (!confirm('DISSOLVI TUTTO? Tutte le sessioni e messaggi saranno eliminati permanentemente.')) return;
+    
+    try {
+      // Elimina TUTTE le sessioni (CASCADE elimina tutti i messaggi)
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Elimina tutto
+      
+      if (error) throw error;
+      
+      // Pulisci localStorage
+      localStorage.removeItem('egovoid_current_session');
+      
+      // Crea nuova sessione pulita
+      setMessages([]);
+      setSessions([]);
+      await initializeSession();
+      loadSessions();
+      
+      alert('Abisso ripristinato.');
+    } catch (err) {
+      console.error('Error resetting all:', err);
+      alert('Errore durante il reset');
+    }
+  };
+
   const handleTalk = async () => {
     if (!input.trim()) return;
     
     try {
-      // Save user message
       await saveMessage(sessionId, 'user', input, 'gemini');
       
-      // Add to local state immediately for UI
       const userMsg: ChatMessage = {
         id: Date.now().toString(),
         session_id: sessionId,
@@ -172,7 +215,6 @@ export default function EgoVoid() {
       };
       setMessages(prev => [...prev, userMsg]);
 
-      // Get AI response
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -183,10 +225,8 @@ export default function EgoVoid() {
       const aiResponse = data.text || data.error || 'Nessuna risposta';
       setResponse(aiResponse);
 
-      // Save AI response
       await saveMessage(sessionId, 'egovoid', aiResponse, 'gemini');
       
-      // Add to local state
       const aiMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         session_id: sessionId,
@@ -199,7 +239,6 @@ export default function EgoVoid() {
       
       setInput('');
       
-      // Update session last_active
       await supabase
         .from('sessions')
         .update({ last_active: new Date().toISOString() })
@@ -240,11 +279,32 @@ export default function EgoVoid() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* SIDEBAR */}
         <div style={{ width: showSidebar ? '250px' : '0', backgroundColor: '#1a1a1a', overflow: 'hidden', transition: 'width 0.3s', borderRight: '1px solid #8b5cf6', display: 'flex', flexDirection: 'column', padding: showSidebar ? '20px' : '0' }}>
-          <button onClick={createSession} style={{ backgroundColor: '#8b5cf6', color: 'white', padding: '10px', border: 'none', marginBottom: '20px', cursor: 'pointer', borderRadius: '4px' }}>NUOVA CHAT</button>
+          <button onClick={createSession} style={{ backgroundColor: '#8b5cf6', color: 'white', padding: '10px', border: 'none', marginBottom: '10px', cursor: 'pointer', borderRadius: '4px' }}>NUOVA CHAT</button>
+          
+          {/* PULSANTE RESET */}
+          <button onClick={resetAll} style={{ backgroundColor: '#dc2626', color: 'white', padding: '8px', border: 'none', marginBottom: '20px', cursor: 'pointer', borderRadius: '4px', fontSize: '0.85em' }}>DISSOLVI TUTTO</button>
+          
           <div style={{ overflowY: 'auto', flex: 1 }}>
             {sessions.map(session => (
-              <div key={session.id} onClick={() => loadMessages(session.id)} style={{ padding: '10px', backgroundColor: sessionId === session.id ? '#8b5cf6' : '#2a2a2a', marginBottom: '5px', cursor: 'pointer', borderRadius: '4px', fontSize: '0.9em' }}>
-                {new Date(session.created_at).toLocaleDateString()}
+              <div key={session.id} style={{ display: 'flex', alignItems: 'center', padding: '10px', backgroundColor: sessionId === session.id ? '#8b5cf6' : '#2a2a2a', marginBottom: '5px', borderRadius: '4px', fontSize: '0.9em' }}>
+                <div onClick={() => loadMessages(session.id)} style={{ flex: 1, cursor: 'pointer' }}>
+                  {new Date(session.created_at).toLocaleDateString()}
+                </div>
+                {/* ICONA ELIMINA */}
+                <button 
+                  onClick={(e) => deleteSession(session.id, e)}
+                  style={{ 
+                    background: 'none', 
+                    border: 'none', 
+                    color: '#ff6b6b', 
+                    cursor: 'pointer', 
+                    fontSize: '1.2em',
+                    padding: '0 5px'
+                  }}
+                  title="Elimina sessione"
+                >
+                  🗑️
+                </button>
               </div>
             ))}
           </div>
