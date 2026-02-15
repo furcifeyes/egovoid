@@ -16,6 +16,7 @@ interface ChatSession {
   id: string;
   created_at: string;
   last_active: string;
+  user_id?: string;
 }
 
 export default function EgoVoid() {
@@ -28,8 +29,25 @@ export default function EgoVoid() {
   const [fascicolo, setFascicolo] = useState<string>('');
   const [showFascicolo, setShowFascicolo] = useState(false);
   const [generatingFascicolo, setGeneratingFascicolo] = useState(false);
+  
+  // AUTH STATE
+  const [user, setUser] = useState<any>(null);
+  const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
+    // Check auth state
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
     const savedSessionId = localStorage.getItem('egovoid_current_session');
     
     if (savedSessionId) {
@@ -40,13 +58,16 @@ export default function EgoVoid() {
     }
     
     loadSessions();
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const initializeSession = async () => {
     try {
+      const userId = user?.id || null;
       const { data, error } = await supabase
         .from('sessions')
-        .insert({})
+        .insert({ user_id: userId })
         .select()
         .single();
       
@@ -65,11 +86,21 @@ export default function EgoVoid() {
 
   const loadSessions = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('sessions')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
+
+      // Se autenticato, prendi solo le sue sessioni
+      if (user) {
+        query = query.eq('user_id', user.id);
+      } else {
+        // Se anonimo, prendi solo sessioni senza user_id
+        query = query.is('user_id', null);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       setSessions(data || []);
@@ -105,13 +136,15 @@ export default function EgoVoid() {
 
   const saveMessage = async (sid: string, sender: string, content: string, route: string = 'gemini') => {
     try {
+      const userId = user?.id || null;
       const { error } = await supabase
         .from('messages')
         .insert({
           session_id: sid,
           sender,
           content,
-          route_used: route
+          route_used: route,
+          user_id: userId
         });
       
       if (error) throw error;
@@ -122,9 +155,10 @@ export default function EgoVoid() {
 
   const createSession = async () => {
     try {
+      const userId = user?.id || null;
       const { data, error } = await supabase
         .from('sessions')
-        .insert({})
+        .insert({ user_id: userId })
         .select()
         .single();
       
@@ -173,10 +207,15 @@ export default function EgoVoid() {
     if (!confirm('DISSOLVI TUTTO? Tutte le sessioni e messaggi saranno eliminati permanentemente.')) return;
     
     try {
-      const { error } = await supabase
-        .from('sessions')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
+      let query = supabase.from('sessions').delete();
+      
+      if (user) {
+        query = query.eq('user_id', user.id);
+      } else {
+        query = query.is('user_id', null);
+      }
+      
+      const { error } = await query;
       
       if (error) throw error;
       
@@ -192,6 +231,60 @@ export default function EgoVoid() {
       console.error('Error resetting all:', err);
       alert('Errore durante il reset');
     }
+  };
+
+  // AUTH FUNCTIONS
+  const handleSignup = async () => {
+    setAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      alert('Registrazione completata! Controlla la tua email per confermare.');
+      setShowAuth(false);
+      setEmail('');
+      setPassword('');
+    } catch (err: any) {
+      alert(err.message || 'Errore durante la registrazione');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    setAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      setShowAuth(false);
+      setEmail('');
+      setPassword('');
+      
+      // Ricarica sessioni dell'utente
+      loadSessions();
+    } catch (err: any) {
+      alert(err.message || 'Errore durante il login');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('egovoid_current_session');
+    setMessages([]);
+    setSessions([]);
+    await initializeSession();
+    loadSessions();
   };
 
   const handleTalk = async () => {
@@ -245,7 +338,6 @@ export default function EgoVoid() {
     }
   };
 
-  // NUOVA: Genera fascicolo psicologico
   const handleFasciculo = async () => {
     if (messages.length < 4) {
       alert('Servono almeno 4 messaggi per generare un fascicolo significativo.');
@@ -257,7 +349,6 @@ export default function EgoVoid() {
     setFascicolo('Analizzando...');
 
     try {
-      // Prepara trascrizione conversazione
       const trascrizione = messages
         .map(m => `${m.sender.toUpperCase()}: ${m.content}`)
         .join('\n\n');
@@ -341,15 +432,76 @@ Rispondi SOLO con il referto strutturato, niente preamboli.`;
         />
       </div>
 
-      {/* LOGO */}
-      <div onClick={handleFasciculo} style={{ textAlign: 'center', marginTop: '30px', marginBottom: '20px', cursor: 'pointer' }}>
-        <img 
-          src="https://res.cloudinary.com/dyiumboth/image/upload/v1767742397/photo_2025-12-24_00-17-00_yislbv_x081me.jpg" 
-          alt="EgoVoid Logo" 
-          style={{ width: '100px', height: '100px', objectFit: 'contain', borderRadius: '50%', border: '2px solid #8b5cf6' }}
-        />
-        <p style={{ color: '#8b5cf6', marginTop: '10px', fontSize: '0.9em' }}>Genera Fascicolo</p>
+      {/* LOGO + AUTH STATUS */}
+      <div style={{ textAlign: 'center', marginTop: '30px', marginBottom: '20px' }}>
+        <div onClick={handleFasciculo} style={{ cursor: 'pointer', display: 'inline-block' }}>
+          <img 
+            src="https://res.cloudinary.com/dyiumboth/image/upload/v1767742397/photo_2025-12-24_00-17-00_yislbv_x081me.jpg" 
+            alt="EgoVoid Logo" 
+            style={{ width: '100px', height: '100px', objectFit: 'contain', borderRadius: '50%', border: '2px solid #8b5cf6' }}
+          />
+          <p style={{ color: '#8b5cf6', marginTop: '10px', fontSize: '0.9em' }}>Genera Fascicolo</p>
+        </div>
+        
+        {/* AUTH STATUS */}
+        <div style={{ marginTop: '15px' }}>
+          {user ? (
+            <div>
+              <p style={{ color: '#10b981', fontSize: '0.85em', marginBottom: '5px' }}>✓ Connesso: {user.email}</p>
+              <button onClick={handleLogout} style={{ backgroundColor: '#dc2626', color: 'white', padding: '6px 12px', border: 'none', cursor: 'pointer', borderRadius: '4px', fontSize: '0.8em' }}>Logout</button>
+            </div>
+          ) : (
+            <button onClick={() => setShowAuth(true)} style={{ backgroundColor: '#10b981', color: 'white', padding: '8px 16px', border: 'none', cursor: 'pointer', borderRadius: '4px', fontSize: '0.85em' }}>💾 Salva le tue Conversazioni</button>
+          )}
+        </div>
       </div>
+
+      {/* AUTH MODAL */}
+      {showAuth && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: '#1a1a1a', padding: '30px', borderRadius: '8px', border: '1px solid #8b5cf6', maxWidth: '400px', width: '100%' }}>
+            <h2 style={{ color: '#8b5cf6', marginBottom: '20px' }}>{authMode === 'signup' ? 'Registrazione' : 'Login'}</h2>
+            
+            <input 
+              type="email" 
+              placeholder="Email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ width: '100%', padding: '10px', marginBottom: '15px', backgroundColor: '#2a2a2a', color: 'white', border: '1px solid #8b5cf6', borderRadius: '4px' }}
+            />
+            
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ width: '100%', padding: '10px', marginBottom: '20px', backgroundColor: '#2a2a2a', color: 'white', border: '1px solid #8b5cf6', borderRadius: '4px' }}
+            />
+            
+            <button 
+              onClick={authMode === 'signup' ? handleSignup : handleLogin}
+              disabled={authLoading}
+              style={{ width: '100%', backgroundColor: '#8b5cf6', color: 'white', padding: '12px', border: 'none', cursor: 'pointer', borderRadius: '4px', marginBottom: '10px' }}
+            >
+              {authLoading ? 'Attendere...' : (authMode === 'signup' ? 'Registrati' : 'Accedi')}
+            </button>
+            
+            <button 
+              onClick={() => setAuthMode(authMode === 'signup' ? 'login' : 'signup')}
+              style={{ width: '100%', backgroundColor: 'transparent', color: '#8b5cf6', padding: '8px', border: '1px solid #8b5cf6', cursor: 'pointer', borderRadius: '4px', marginBottom: '10px' }}
+            >
+              {authMode === 'signup' ? 'Hai già un account? Login' : 'Non hai un account? Registrati'}
+            </button>
+            
+            <button 
+              onClick={() => setShowAuth(false)}
+              style={{ width: '100%', backgroundColor: '#666', color: 'white', padding: '8px', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
+            >
+              Chiudi
+            </button>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* SIDEBAR */}
@@ -366,14 +518,7 @@ Rispondi SOLO con il referto strutturato, niente preamboli.`;
                 </div>
                 <button 
                   onClick={(e) => deleteSession(session.id, e)}
-                  style={{ 
-                    background: 'none', 
-                    border: 'none', 
-                    color: '#ff6b6b', 
-                    cursor: 'pointer', 
-                    fontSize: '1.2em',
-                    padding: '0 5px'
-                  }}
+                  style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', fontSize: '1.2em', padding: '0 5px' }}
                   title="Elimina sessione"
                 >
                   🗑️
@@ -393,18 +538,12 @@ Rispondi SOLO con il referto strutturato, niente preamboli.`;
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <h2 style={{ color: '#8b5cf6', margin: 0 }}>FASCICOLO PSICOLOGICO</h2>
                 <div>
-                  <button onClick={downloadFascicolo} disabled={generatingFascicolo} style={{ backgroundColor: '#8b5cf6', color: 'white', padding: '8px 16px', border: 'none', cursor: 'pointer', borderRadius: '4px', marginRight: '10px' }}>
-                    📥 Scarica
-                  </button>
-                  <button onClick={() => setShowFascicolo(false)} style={{ backgroundColor: '#666', color: 'white', padding: '8px 16px', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
-                    ✕ Chiudi
-                  </button>
+                  <button onClick={downloadFascicolo} disabled={generatingFascicolo} style={{ backgroundColor: '#8b5cf6', color: 'white', padding: '8px 16px', border: 'none', cursor: 'pointer', borderRadius: '4px', marginRight: '10px' }}>📥 Scarica</button>
+                  <button onClick={() => setShowFascicolo(false)} style={{ backgroundColor: '#666', color: 'white', padding: '8px 16px', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>✕ Chiudi</button>
                 </div>
               </div>
               <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#1a1a1a', padding: '30px', borderRadius: '8px', border: '1px solid #8b5cf6' }}>
-                <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'system-ui', lineHeight: '1.6', color: '#ddd', fontSize: '0.95em' }}>
-                  {fascicolo}
-                </pre>
+                <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'system-ui', lineHeight: '1.6', color: '#ddd', fontSize: '0.95em' }}>{fascicolo}</pre>
               </div>
             </div>
           )}
