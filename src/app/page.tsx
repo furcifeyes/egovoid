@@ -8,12 +8,14 @@ interface ChatMessage {
   session_id: string;
   sender: string;
   content: string;
+  route_used: string;
   created_at: string;
 }
 
 interface ChatSession {
   id: string;
   created_at: string;
+  last_active: string;
 }
 
 export default function EgoVoid() {
@@ -24,65 +26,129 @@ export default function EgoVoid() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [showSidebar, setShowSidebar] = useState(false);
 
+  // Initialize session on mount with localStorage persistence
   useEffect(() => {
-    const newSessionId = Date.now().toString();
-    setSessionId(newSessionId);
+    const savedSessionId = localStorage.getItem('egovoid_current_session');
+    
+    if (savedSessionId) {
+      // Resume existing session
+      setSessionId(savedSessionId);
+      loadMessages(savedSessionId);
+    } else {
+      // Create new session
+      initializeSession();
+    }
+    
     loadSessions();
   }, []);
 
+  // Create new session in Supabase
+  const initializeSession = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .insert({})
+        .select()
+        .single();
+      
+      if (error) throw error;
+      if (data) {
+        setSessionId(data.id);
+        // Save to localStorage
+        localStorage.setItem('egovoid_current_session', data.id);
+      }
+    } catch (e) {
+      console.error('Error creating session:', e);
+      // Fallback: usa un ID locale se Supabase fallisce
+      const fallbackId = Date.now().toString();
+      setSessionId(fallbackId);
+      localStorage.setItem('egovoid_current_session', fallbackId);
+    }
+  };
+
+  // Load all chat sessions
   const loadSessions = async () => {
     try {
-      const { data } = await supabase
-        .from('chat_sessions')
+      const { data, error } = await supabase
+        .from('sessions')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
       setSessions(data || []);
     } catch (e) {
       console.error('Error loading sessions:', e);
     }
   };
 
+  // Load messages for a session
   const loadMessages = async (sid: string) => {
     try {
-      const { data } = await supabase
-        .from('chat_messages')
+      const { data, error } = await supabase
+        .from('messages')
         .select('*')
         .eq('session_id', sid)
         .order('created_at', { ascending: true });
+      
+      if (error) throw error;
       setMessages(data || []);
       setSessionId(sid);
       setInput('');
       setResponse('');
+      
+      // Update localStorage to current session
+      localStorage.setItem('egovoid_current_session', sid);
+      
+      // Update last_active
+      await supabase
+        .from('sessions')
+        .update({ last_active: new Date().toISOString() })
+        .eq('id', sid);
     } catch (e) {
       console.error('Error loading messages:', e);
     }
   };
 
-  const saveMessage = async (sid: string, sender: string, content: string) => {
+  // Save message to Supabase
+  const saveMessage = async (sid: string, sender: string, content: string, route: string = 'gemini') => {
     try {
-      await supabase.from('chat_messages').insert({
-        session_id: sid,
-        sender,
-        content,
-        created_at: new Date().toISOString()
-      });
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          session_id: sid,
+          sender,
+          content,
+          route_used: route
+        });
+      
+      if (error) throw error;
     } catch (e) {
       console.error('Error saving message:', e);
     }
   };
 
+  // Create new session
   const createSession = async () => {
-    const newSessionId = Date.now().toString();
     try {
-      await supabase.from('chat_sessions').insert({
-        id: newSessionId,
-        created_at: new Date().toISOString()
-      });
-      setSessionId(newSessionId);
-      setMessages([]);
-      setInput('');
-      setResponse('');
-      loadSessions();
+      const { data, error } = await supabase
+        .from('sessions')
+        .insert({})
+        .select()
+        .single();
+      
+      if (error) throw error;
+      if (data) {
+        setSessionId(data.id);
+        setMessages([]);
+        setInput('');
+        setResponse('');
+        
+        // Save new session to localStorage
+        localStorage.setItem('egovoid_current_session', data.id);
+        
+        loadSessions();
+      }
     } catch (e) {
       console.error('Error creating session:', e);
     }
@@ -90,23 +156,57 @@ export default function EgoVoid() {
 
   const handleTalk = async () => {
     if (!input.trim()) return;
+    
     try {
-      await saveMessage(sessionId, 'user', input);
-      setMessages([...messages, { id: Date.now().toString(), session_id: sessionId, sender: 'user', content: input, created_at: new Date().toISOString() }]);
+      // Save user message
+      await saveMessage(sessionId, 'user', input, 'gemini');
+      
+      // Add to local state immediately for UI
+      const userMsg: ChatMessage = {
+        id: Date.now().toString(),
+        session_id: sessionId,
+        sender: 'user',
+        content: input,
+        route_used: 'gemini',
+        created_at: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, userMsg]);
 
+      // Get AI response
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input })
       });
+      
       const data = await res.json();
-      const aiResponse = data.text || data.error;
+      const aiResponse = data.text || data.error || 'Nessuna risposta';
       setResponse(aiResponse);
 
-      await saveMessage(sessionId, 'egovoid', aiResponse);
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), session_id: sessionId, sender: 'egovoid', content: aiResponse, created_at: new Date().toISOString() }]);
+      // Save AI response
+      await saveMessage(sessionId, 'egovoid', aiResponse, 'gemini');
+      
+      // Add to local state
+      const aiMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        session_id: sessionId,
+        sender: 'egovoid',
+        content: aiResponse,
+        route_used: 'gemini',
+        created_at: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, aiMsg]);
+      
       setInput('');
+      
+      // Update session last_active
+      await supabase
+        .from('sessions')
+        .update({ last_active: new Date().toISOString() })
+        .eq('id', sessionId);
+        
     } catch (e) {
+      console.error('Error:', e);
       setResponse('Errore di connessione all\'Abisso.');
     }
   };
@@ -138,15 +238,19 @@ export default function EgoVoid() {
       </div>
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* SIDEBAR */}
         <div style={{ width: showSidebar ? '250px' : '0', backgroundColor: '#1a1a1a', overflow: 'hidden', transition: 'width 0.3s', borderRight: '1px solid #8b5cf6', display: 'flex', flexDirection: 'column', padding: showSidebar ? '20px' : '0' }}>
           <button onClick={createSession} style={{ backgroundColor: '#8b5cf6', color: 'white', padding: '10px', border: 'none', marginBottom: '20px', cursor: 'pointer', borderRadius: '4px' }}>NUOVA CHAT</button>
           <div style={{ overflowY: 'auto', flex: 1 }}>
             {sessions.map(session => (
-              <div key={session.id} onClick={() => loadMessages(session.id)} style={{ padding: '10px', backgroundColor: sessionId === session.id ? '#8b5cf6' : '#2a2a2a', marginBottom: '5px', cursor: 'pointer', borderRadius: '4px', fontSize: '0.9em' }}>{new Date(session.created_at).toLocaleDateString()}</div>
+              <div key={session.id} onClick={() => loadMessages(session.id)} style={{ padding: '10px', backgroundColor: sessionId === session.id ? '#8b5cf6' : '#2a2a2a', marginBottom: '5px', cursor: 'pointer', borderRadius: '4px', fontSize: '0.9em' }}>
+                {new Date(session.created_at).toLocaleDateString()}
+              </div>
             ))}
           </div>
         </div>
 
+        {/* MAIN CONTENT */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
           <button onClick={() => setShowSidebar(!showSidebar)} style={{ position: 'absolute', left: '20px', top: '20px', backgroundColor: '#8b5cf6', color: 'white', border: 'none', padding: '8px 12px', cursor: 'pointer', borderRadius: '4px', fontSize: '0.8em', zIndex: 10 }}>{showSidebar ? '✕' : '☰'}</button>
 
