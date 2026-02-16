@@ -410,76 +410,115 @@ export default function EgoVoid() {
     }
   };
 
-  const handleFasciculo = async () => {
-    if (messages.length < 4) {
-      alert('Servono almeno 4 messaggi per generare un fascicolo significativo.');
+const handleFasciculo = async () => {
+  setGeneratingFascicolo(true);
+  setShowFascicolo(true);
+  setFascicolo('Caricando tutte le conversazioni...');
+
+  try {
+    // 1. Carica TUTTE le sessioni dell'utente
+    let sessionsQuery = supabase
+      .from('sessions')
+      .select('id')
+      .order('created_at', { ascending: true });
+    
+    if (user) {
+      sessionsQuery = sessionsQuery.eq('user_id', user.id);
+    } else {
+      sessionsQuery = sessionsQuery.is('user_id', null);
+    }
+    
+    const { data: allSessions, error: sessionsError } = await sessionsQuery;
+    
+    if (sessionsError) throw sessionsError;
+    
+    if (!allSessions || allSessions.length === 0) {
+      setFascicolo('Nessuna conversazione trovata. Chatta un po\' prima di generare il fascicolo!');
+      setGeneratingFascicolo(false);
       return;
     }
 
-    setGeneratingFascicolo(true);
-    setShowFascicolo(true);
-    setFascicolo('Analizzando...');
+    // 2. Carica TUTTI i messaggi di TUTTE le sessioni
+    const sessionIds = allSessions.map(s => s.id);
+    
+    const { data: allMessages, error: messagesError } = await supabase
+      .from('messages')
+      .select('*')
+      .in('session_id', sessionIds)
+      .order('created_at', { ascending: true });
+    
+    if (messagesError) throw messagesError;
+    
+    if (!allMessages || allMessages.length < 4) {
+      setFascicolo('Servono almeno 4 messaggi totali per generare un fascicolo significativo.');
+      setGeneratingFascicolo(false);
+      return;
+    }
 
-    try {
-      const trascrizione = messages
-        .map(m => `${m.sender.toUpperCase()}: ${m.content}`)
-        .join('\n\n');
+    setFascicolo(`Analizzando ${allMessages.length} messaggi da ${allSessions.length} conversazioni...`);
 
-      const promptAnalisi = `Sei uno psicologo clinico specializzato in analisi di trascrizioni. Analizza questa conversazione e genera un REFERTO PSICOLOGICO STRUTTURATO.
+    // 3. Crea trascrizione globale
+    const trascrizione = allMessages
+      .map(m => `${m.sender.toUpperCase()}: ${m.content}`)
+      .join('\n\n');
 
-TRASCRIZIONE:
+    // 4. Prompt aggiornato per analisi globale
+    const promptAnalisi = `Sei uno psicologo clinico specializzato in analisi di trascrizioni. Analizza TUTTE queste conversazioni e genera un REFERTO PSICOLOGICO STRUTTURATO COMPLETO.
+
+TRASCRIZIONE COMPLETA (${allMessages.length} messaggi da ${allSessions.length} conversazioni):
 ${trascrizione}
 
 GENERA UN REFERTO CON QUESTE SEZIONI:
 
 ## 1. BIAS COGNITIVI RILEVATI
-Identifica bias specifici con esempi dalla conversazione (confirmation bias, availability bias, sunk cost fallacy, etc.)
+Identifica bias specifici ricorrenti in TUTTE le conversazioni con esempi (confirmation bias, availability bias, sunk cost fallacy, etc.)
 
 ## 2. PATTERN EMOTIVI RICORRENTI
-Emozioni dominanti (rabbia, paura, vuoto, vergogna, ansia) con intensità e frequenza
+Emozioni dominanti (rabbia, paura, vuoto, vergogna, ansia) con intensità e frequenza TRASVERSALE alle conversazioni
 
 ## 3. TRAUMI E FERITE PSICOLOGICHE
-Eventi o esperienze dolorose emerse, anche se non esplicitate direttamente
+Eventi o esperienze dolorose emerse, anche se non esplicitate direttamente. Cerca pattern ricorrenti.
 
 ## 4. CONTRADDIZIONI IDENTITARIE
-Discrepanze tra ciò che l'utente dice di essere/voler essere e ciò che emerge dai comportamenti
+Discrepanze tra ciò che l'utente dice di essere/voler essere e ciò che emerge dai comportamenti in TUTTE le chat
 
 ## 5. MECCANISMI DI DIFESA E FUGA
-Strategie di evitamento (lavoro, social, sostanze, razionalizzazioni, negazione)
+Strategie di evitamento (lavoro, social, sostanze, razionalizzazioni, negazione) che si ripetono
 
 ## 6. NARRAZIONI IDENTITARIE
-Frasi tipo "sono una persona che..." - come l'utente si definisce
+Frasi tipo "sono una persona che..." - come l'utente si auto-definisce COSTANTEMENTE
 
 ## 7. AREE DI LAVORO SUGGERITE
-3-5 aree concrete su cui l'utente potrebbe lavorare per crescita personale
+3-5 aree concrete su cui l'utente potrebbe lavorare per crescita personale, basate sull'INTERO PERCORSO
 
 STILE DEL REFERTO:
 - Diretto, clinico, ma empatico
-- Evidenze specifiche dalla conversazione
+- Evidenze specifiche dalle conversazioni
 - NO giudizi morali, solo osservazioni cliniche
 - Linguaggio tecnico ma comprensibile
 - Lunghezza: report completo e approfondito
+- FOCUS: pattern ricorrenti e evoluzione nel tempo
 
 Rispondi SOLO con il referto strutturato, niente preamboli.`;
 
-      const res = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: promptAnalisi })
-      });
+    const res = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: promptAnalisi })
+    });
 
-      const data = await res.json();
-      const report = data.text || 'Errore nella generazione del fascicolo';
-      
-      setFascicolo(report);
-      setGeneratingFascicolo(false);
+    const data = await res.json();
+    const report = data.text || 'Errore nella generazione del fascicolo';
+    
+    setFascicolo(report);
+    setGeneratingFascicolo(false);
 
-    } catch (err) {
-      console.error('Error generating fascicolo:', err);
-      setFascicolo('Errore durante la generazione del fascicolo.');
-      setGeneratingFascicolo(false);
-    }
-  };
+  } catch (err) {
+    console.error('Error generating fascicolo:', err);
+    setFascicolo('Errore durante la generazione del fascicolo.');
+    setGeneratingFascicolo(false);
+  }
+};
 
   const downloadFascicolo = () => {
     const blob = new Blob([fascicolo], { type: 'text/markdown' });
