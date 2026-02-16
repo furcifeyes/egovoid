@@ -58,7 +58,7 @@ export default function EgoVoid() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Initialize session and load sessions (runs when auth is ready)
+  // Load sessions when auth is ready (NO session creation here!)
   useEffect(() => {
     if (!authInitialized) return;
 
@@ -76,19 +76,20 @@ export default function EgoVoid() {
             setSessionId(savedSessionId);
             loadMessages(savedSessionId);
           } else {
-            // Sessione non esiste più, creane una nuova
+            // Sessione non esiste più, rimuovi localStorage
             localStorage.removeItem('egovoid_current_session');
-            initializeSession();
+            setSessionId('');
           }
         });
-    } else {
-      initializeSession();
     }
     
     loadSessions();
   }, [authInitialized, user]);
 
-  const initializeSession = async () => {
+  // Create session (chiamata SOLO quando serve)
+  const createSessionIfNeeded = async (): Promise<string> => {
+    if (sessionId) return sessionId; // Già esiste
+
     try {
       const userId = user?.id || null;
       const { data, error } = await supabase
@@ -101,13 +102,18 @@ export default function EgoVoid() {
       if (data) {
         setSessionId(data.id);
         localStorage.setItem('egovoid_current_session', data.id);
+        loadSessions(); // Refresh sidebar
+        return data.id;
       }
     } catch (e) {
       console.error('Error creating session:', e);
-      const fallbackId = Date.now().toString();
-      setSessionId(fallbackId);
-      localStorage.setItem('egovoid_current_session', fallbackId);
     }
+    
+    // Fallback: ID temporaneo locale
+    const fallbackId = `temp_${Date.now()}`;
+    setSessionId(fallbackId);
+    localStorage.setItem('egovoid_current_session', fallbackId);
+    return fallbackId;
   };
 
   const loadSessions = async () => {
@@ -213,17 +219,23 @@ export default function EgoVoid() {
         .delete()
         .eq('id', sid);
       
-      if (error) throw error;
-      
-      if (sid === sessionId) {
-        localStorage.removeItem('egovoid_current_session');
-        await initializeSession();
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
       }
       
+      // Se era la sessione corrente, pulisci tutto
+      if (sid === sessionId) {
+        localStorage.removeItem('egovoid_current_session');
+        setSessionId('');
+        setMessages([]);
+      }
+      
+      // Ricarica lista sessioni
       loadSessions();
     } catch (err) {
       console.error('Error deleting session:', err);
-      alert('Errore durante l\'eliminazione');
+      alert('Errore durante l\'eliminazione. Controlla la console.');
     }
   };
 
@@ -247,8 +259,7 @@ export default function EgoVoid() {
       
       setMessages([]);
       setSessions([]);
-      await initializeSession();
-      loadSessions();
+      setSessionId('');
       
       alert('Abisso ripristinato.');
     } catch (err) {
@@ -341,19 +352,22 @@ export default function EgoVoid() {
     localStorage.removeItem('egovoid_current_session');
     setMessages([]);
     setSessions([]);
-    await initializeSession();
-    loadSessions();
+    setSessionId('');
   };
 
   const handleTalk = async () => {
     if (!input.trim()) return;
     
     try {
-      await saveMessage(sessionId, 'user', input, 'gemini');
+      // Crea sessione SOLO se non esiste (primo messaggio!)
+      const currentSessionId = await createSessionIfNeeded();
+      
+      // Save user message
+      await saveMessage(currentSessionId, 'user', input, 'gemini');
       
       const userMsg: ChatMessage = {
         id: Date.now().toString(),
-        session_id: sessionId,
+        session_id: currentSessionId,
         sender: 'user',
         content: input,
         route_used: 'gemini',
@@ -371,11 +385,11 @@ export default function EgoVoid() {
       const aiResponse = data.text || data.error || 'Nessuna risposta';
       setResponse(aiResponse);
 
-      await saveMessage(sessionId, 'egovoid', aiResponse, 'gemini');
+      await saveMessage(currentSessionId, 'egovoid', aiResponse, 'gemini');
       
       const aiMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        session_id: sessionId,
+        session_id: currentSessionId,
         sender: 'egovoid',
         content: aiResponse,
         route_used: 'gemini',
@@ -388,7 +402,7 @@ export default function EgoVoid() {
       await supabase
         .from('sessions')
         .update({ last_active: new Date().toISOString() })
-        .eq('id', sessionId);
+        .eq('id', currentSessionId);
         
     } catch (e) {
       console.error('Error:', e);
