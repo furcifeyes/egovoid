@@ -685,7 +685,7 @@ Rispondi SOLO con il referto strutturato, niente preamboli.`;
           )}
 
           <div style={{ padding: '20px', paddingTop: '60px', textAlign: 'center', flex: 1, overflowY: 'auto' }}>
-            <p style={{ color: '#8b5cf6', marginBottom: '30px', fontSize: '1.1em' }}>IL TUO IO E UN MITO DA DECOSTRUIRE</p>
+            <p style={{ color: '#8b5cf6', marginBottom: '30px', fontSize: '1.1em' }}>DEAL WITH YOUR PAST, ACCEPT IT FOR WHAT IT IS AND MOVE ON, OTHERWISE YOU ARE GONNA CARRY THAT WEIGHT</p>
 
             <div style={{ maxWidth: '80%', margin: '0 auto 30px', maxHeight: '300px', overflowY: 'auto', textAlign: 'left' }}>
               {messages.map(msg => (
