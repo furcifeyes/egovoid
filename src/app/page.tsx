@@ -463,43 +463,85 @@ const handleFasciculo = async () => {
       .join('\n\n');
 
     // 4. Prompt aggiornato per analisi globale
-    const promptAnalisi = `Sei uno psicologo clinico specializzato in analisi di trascrizioni. Analizza TUTTE queste conversazioni e genera un REFERTO PSICOLOGICO STRUTTURATO COMPLETO.
+  const promptAnalisi = `Sei uno psicologo clinico specializzato in analisi di trascrizioni conversazionali.
+Analizza TUTTE le conversazioni fornite e genera un REFERTO PSICOLOGICO STRUTTURATO.
 
-TRASCRIZIONE COMPLETA (${allMessages.length} messaggi da ${allSessions.length} conversazioni):
+TRASCRIZIONE COMPLETA:
+${allMessages.length} messaggi da ${allSessions.length} conversazioni
 ${trascrizione}
 
-GENERA UN REFERTO CON QUESTE SEZIONI:
+GENERA REFERTO CON QUESTE 7 SEZIONI:
 
 ## 1. BIAS COGNITIVI RILEVATI
-Identifica bias specifici ricorrenti in TUTTE le conversazioni con esempi (confirmation bias, availability bias, sunk cost fallacy, etc.)
+Per ogni bias (MAX 3):
+- Nome tecnico del bias
+- UN esempio specifico dalla conversazione (citazione breve)
+- Come influenza le azioni dell'utente (1 frase)
+Formato: "NOME BIAS: [esempio] → IMPATTO: [conseguenza comportamentale]"
 
 ## 2. PATTERN EMOTIVI RICORRENTI
-Emozioni dominanti (rabbia, paura, vuoto, vergogna, ansia) con intensità e frequenza TRASVERSALE alle conversazioni
+Identifica 2-3 emozioni dominanti:
+- Nome emozione + intensità (bassa/media/alta)
+- Trigger specifico (cosa la scatena)
+- Reazione comportamentale (cosa fa l'utente)
+MAX 4 frasi per emozione.
 
 ## 3. TRAUMI E FERITE PSICOLOGICHE
-Eventi o esperienze dolorose emerse, anche se non esplicitate direttamente. Cerca pattern ricorrenti.
+SOLO se emersi chiaramente:
+- Evento specifico menzionato
+- Impatto visibile nel presente
+Se NON ci sono evidenze chiare: "Non emersi elementi sufficienti in questa sessione."
+NO speculazioni. SOLO fatti dalle conversazioni.
 
 ## 4. CONTRADDIZIONI IDENTITARIE
-Discrepanze tra ciò che l'utente dice di essere/voler essere e ciò che emerge dai comportamenti in TUTTE le chat
+Elenca 2-3 discrepanze:
+- "L'utente dice: [X] ma fa: [Y]"
+- Esempio concreto dalla conversazione
+MAX 3 frasi per contraddizione.
 
 ## 5. MECCANISMI DI DIFESA E FUGA
-Strategie di evitamento (lavoro, social, sostanze, razionalizzazioni, negazione) che si ripetono
+Pattern di evitamento identificati:
+- Razionalizzazioni ("È normale perché...")
+- Proiezioni ("Gli altri non capiscono...")
+- Negazioni ("Non è un problema...")
+- Fughe concrete (lavoro, social, sostanze)
+UN esempio per ciascuno identificato.
 
 ## 6. NARRAZIONI IDENTITARIE
-Frasi tipo "sono una persona che..." - come l'utente si auto-definisce COSTANTEMENTE
+Frasi tipo "sono una persona che..." dalla conversazione.
+Per ciascuna:
+- Citazione esatta
+- Se AIUTA o BLOCCA la crescita (1 frase)
 
 ## 7. AREE DI LAVORO SUGGERITE
-3-5 aree concrete su cui l'utente potrebbe lavorare per crescita personale, basate sull'INTERO PERCORSO
+3-5 aree con struttura:
+- Problema specifico (1 frase)
+- Obiettivo misurabile (1 frase)
+- Prima azione concreta (1 frase)
 
-STILE DEL REFERTO:
-- Diretto, clinico, ma empatico
-- Evidenze specifiche dalle conversazioni
-- NO giudizi morali, solo osservazioni cliniche
-- Linguaggio tecnico ma comprensibile
-- Lunghezza: report completo e approfondito
-- FOCUS: pattern ricorrenti e evoluzione nel tempo
+STILE IMPERATIVO:
+- DIRETTO e SINTETICO: ogni sezione MAX 5 frasi
+- CONCRETO: esempi specifici, NO generalizzazioni
+- CLINICO ma COMPRENSIBILE: termini tecnici spiegati semplicemente
+- ACTIONABLE: focus su cosa può FARE l'utente
+- NO prolissità accademica
+- NO filosofia o citazioni motivazionali
 
-Rispondi SOLO con il referto strutturato, niente preamboli.`;
+ESEMPIO TONO GIUSTO:
+❌ SBAGLIATO: "L'affermazione 'La vita non ha senso' rappresenta una generalizzazione eccessiva basata probabilmente su esperienze negative recenti..."
+
+✅ CORRETTO: "GENERALIZZAZIONE ECCESSIVA: 'La vita non ha senso' → generalizza da eventi recenti negativi a tutta l'esistenza. IMPATTO: blocca ricerca soluzioni concrete. LAVORO: Identificare trigger specifico ultima settimana."
+
+LUNGHEZZA TARGET:
+- Ogni sezione: 3-5 frasi
+- Report totale: ~500-800 parole
+- Mai superare 1200 parole
+
+OUTPUT PURO:
+Rispondi SOLO con il referto strutturato.
+NO preamboli
+NO conclusioni motivazionali
+SOLO le 7 sezioni con i dati.`;
 
     const res = await fetch('/api/gemini', {
   method: 'POST',
