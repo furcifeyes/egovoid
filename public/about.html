@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EgoVoid – Lo Specchio che Non Mente</title>
+    <meta name="description" content="Il tuo io è un mito da decostruire. EgoVoid ti mostra la verità sui tuoi pattern, bias e contraddizioni. Nessuna consolazione. Solo analisi brutale.">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            line-height: 1.7;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 0;
+            border-bottom: 1px solid #8b5cf6;
+        }
+        
+        .eye-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            border-radius: 50%;
+            border: 2px solid #8b5cf6;
+            overflow: hidden;
+        }
+        
+        .eye-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #8b5cf6;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+        
+        .tagline {
+            font-size: 1.3em;
+            color: #a78bfa;
+            margin-bottom: 10px;
+        }
+        
+        .version {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .cta-primary {
+            display: inline-block;
+            background-color: #8b5cf6;
+            color: white;
+            padding: 16px 40px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid #8b5cf6;
+        }
+        
+        .cta-primary:hover {
+            background-color: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+        
+        /* Content Sections */
+        section {
+            margin: 60px 0;
+            padding: 40px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        h2 {
+            font-size: 2em;
+            color: #8b5cf6;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        
+        h3 {
+            font-size: 1.5em;
+            color: #a78bfa;
+            margin: 30px 0 15px;
+            font-weight: 600;
+        }
+        
+        p {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #cccccc;
+        }
+        
+        ul {
+            list-style: none;
+            margin: 20px 0;
+        }
+        
+        ul li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            color: #cccccc;
+            font-size: 1.05em;
+        }
+        
+        ul li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #8b5cf6;
+            font-weight: bold;
+        }
+        
+        /* Problem Statement */
+        .problem-box {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            border-left: 4px solid #8b5cf6;
+            padding: 30px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+        
+        .problem-box p {
+            font-style: italic;
+            color: #999;
+        }
+        
+        /* Examples */
+        .example-card {
+            background: #111111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .example-card h4 {
+            color: #8b5cf6;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+        
+        .example-card .scenario {
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+        
+        .example-card .result {
+            color: #10b981;
+            font-weight: 500;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+        }
+        
+        /* Pricing */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .pricing-card {
+            background: #111111;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 35px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .pricing-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-5px);
+        }
+        
+        .pricing-card.premium {
+            border-color: #8b5cf6;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+        }
+        
+        .pricing-card h4 {
+            font-size: 1.5em;
+            color: #8b5cf6;
+            margin-bottom: 15px;
+        }
+        
+        .pricing-card .price {
+            font-size: 2.5em;
+            color: #ffffff;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+        
+        .pricing-card ul {
+            text-align: left;
+            margin: 25px 0;
+        }
+        
+        /* Disclaimer */
+        .disclaimer {
+            background: #1a1a1a;
+            border: 1px solid #dc2626;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 40px 0;
+        }
+        
+        .disclaimer h3 {
+            color: #dc2626;
+        }
+        
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 60px 0;
+            background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+            border-radius: 12px;
+            margin: 60px 0;
+        }
+        
+        .cta-section h2 {
+            margin-bottom: 20px;
+        }
+        
+        .cta-section p {
+            font-size: 1.2em;
+            margin-bottom: 35px;
+            color: #aaa;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #333;
+        }
+        
+        footer a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .tagline {
+                font-size: 1.1em;
+            }
+            
+            h2 {
+                font-size: 1.6em;
+            }
+            
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="eye-logo">
+                <img src="https://res.cloudinary.com/dyiumboth/image/upload/v1767742397/photo_2025-12-24_00-17-00_yislbv_x081me.jpg" alt="EgoVoid Eye Logo">
+            </div>
+            <h1>EgoVoid – Lo Specchio che Non Mente</h1>
+            <p class="tagline">Il tuo "io" è una storia che ti racconti.<br>EgoVoid ti aiuta a smontarla.</p>
+            <p class="version">Versione 2.0 – Febbraio 2026</p>
+            <a href="https://egovoid.vercel.app" class="cta-primary">Provalo Gratis Ora</a>
+        </div>
+
+        <!-- Problem Statement -->
+        <section>
+            <h2>Non sei qui per sentirti meglio</h2>
+            <p>Non sei qui per un like emotivo o una frase motivazionale da Instagram.</p>
+            <p>Sei qui perché, in fondo, sai che qualcosa non torna:</p>
+            
+            <div class="problem-box">
+                <p>→ Dici di volere lanciare quel progetto… ma non lo fai mai.</p>
+                <p>→ Lavori come un matto… ma non sei felice.</p>
+                <p>→ Ti presenti ai colloqui con un CV perfetto… ma dentro senti di mentire.</p>
+            </div>
+            
+            <p>Quelle sono <strong>bugie che ti racconti</strong>. Razionalizzazioni. Maschere. Pattern automatici che ripeti senza accorgertene.</p>
+            <p>EgoVoid è uno <strong>specchio spietato</strong>. Ti pone domande dirette, analizza le tue parole, tira fuori le contraddizioni e ti mostra il vuoto tra ciò che dici di essere e ciò che realmente fai.</p>
+            <p><strong>Non ti consola. Non ti motiva. Ti mostra la verità nuda.</strong> E da lì… tocca a te decidere cosa fare.</p>
+        </section>
+
+        <!-- Who is it NOT for -->
+        <section>
+            <h2>Chi NON è per EgoVoid</h2>
+            <ul>
+                <li>Chi vuole conferme e carezze emotive</li>
+                <li>Chi cerca un "safe space" morbido</li>
+                <li>Chi vuole sentirsi "bravo" senza guardarsi dentro</li>
+                <li>Chi non è pronto a vedere lati scomodi di sé</li>
+            </ul>
+        </section>
+
+        <!-- Who IS it for -->
+        <section>
+            <h2>Chi È EgoVoid (e perché funziona)</h2>
+            <ul>
+                <li><strong>Founder che procrastinano</strong> e si auto-sabotano</li>
+                <li><strong>Professionisti</strong> che lavorano troppo per riempire un vuoto</li>
+                <li><strong>Persone in crisi</strong> di carriera o esistenziale</li>
+                <li><strong>Chi è stanco di fingere</strong> e vuole un ritratto onesto di sé</li>
+            </ul>
+        </section>
+
+        <!-- Examples -->
+        <section>
+            <h2>Esempi reali di cosa fa per te</h2>
+            
+            <div class="example-card">
+                <h4>1. Il founder bloccato</h4>
+                <p class="scenario"><strong>Dici:</strong> "Voglio lanciare il mio prodotto".</p>
+                <p class="scenario"><strong>EgoVoid:</strong> "Ecco il pattern: ogni volta che sei vicino al lancio, trovi un dettaglio 'da perfezionare'. È paura del fallimento mascherata da perfezionismo. Ecco le prove dalle tue parole".</p>
+                <p class="result">→ <strong>Risultato:</strong> Vedi il meccanismo. Puoi smettere di girarci intorno.</p>
+            </div>
+
+            <div class="example-card">
+                <h4>2. Il professionista insoddisfatto</h4>
+                <p class="scenario"><strong>Dici:</strong> "Lavoro tanto ma non sono felice".</p>
+                <p class="scenario"><strong>EgoVoid:</strong> "Stai usando il lavoro per evitare qualcos'altro: solitudine? Paura di fermarti? Ecco i pattern emotivi ricorrenti".</p>
+                <p class="result">→ <strong>Risultato:</strong> Capisci il vero problema, non solo il sintomo.</p>
+            </div>
+
+            <div class="example-card">
+                <h4>3. Il job hunter autentico</h4>
+                <p class="scenario">Invece del solito CV pieno di buzzword…</p>
+                <p class="scenario"><strong>EgoVoid ti fa 5 domande cliniche:</strong> "Descrivi l'ultima volta che hai risolto un problema complesso senza Google? Quale progetto hai mollato e perché?"</p>
+                <p class="result">→ <strong>Output:</strong> Un "CV del Sé" basato su evidenze reali, non su finzione. Colpisce i recruiter per onestà brutale.</p>
+            </div>
+        </section>
+
+        <!-- What you get -->
+        <section>
+            <h2>Cosa ottieni usando EgoVoid</h2>
+            <ul>
+                <li><strong>Chat diretta e provocatoria</strong> (nero + viola minimal, niente fronzoli)</li>
+                <li><strong>Fascicolo del tuo Sé:</strong> un report scaricabile con:
+                    <ul style="margin-left: 30px; margin-top: 10px;">
+                        <li>Bias cognitivi che ti fregano</li>
+                        <li>Pattern emotivi che ripeti</li>
+                        <li>Contraddizioni tra chi dici di essere e chi sei davvero</li>
+                        <li>Meccanismi di fuga che usi per non guardare il vuoto</li>
+                        <li>Suggerimenti concreti per lavorare su te stesso (non soluzioni magiche)</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Pricing -->
+        <section>
+            <h2>Prezzi</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h4>Free</h4>
+                    <div class="price">€0</div>
+                    <ul>
+                        <li>Chat illimitata</li>
+                        <li>Anteprima fascicolo</li>
+                        <li>Analisi base pattern</li>
+                    </ul>
+                </div>
+                
+                <div class="pricing-card premium">
+                    <h4>Premium</h4>
+                    <div class="price">€29.99<span style="font-size: 0.4em; color: #aaa;">/mese</span></div>
+                    <ul>
+                        <li>Tutto di Free +</li>
+                        <li>Fascicolo completo (PDF)</li>
+                        <li>CV del Sé Generator</li>
+                        <li>Toolkit per smontare bias</li>
+                        <li>Storage illimitato</li>
+                    </ul>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: 20px; color: #aaa;">O acquista un singolo fascicolo per €9.99</p>
+        </section>
+
+        <!-- Disclaimer -->
+        <section>
+            <div class="disclaimer">
+                <h3>⚠️ Disclaimer importante</h3>
+                <p><strong>EgoVoid non è terapia.</strong> Non diagnostica disturbi mentali. Non sostituisce uno psicologo o un medico. Se stai male davvero, vai da un professionista.</p>
+                <p>Qui trovi solo uno specchio: la verità sui tuoi pattern. Il lavoro di cambiarli è tuo.</p>
+                <p><strong>Privacy totale:</strong> conversazioni anonime possibili, dati protetti, niente vendita a terzi.</p>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <div class="cta-section">
+            <h2>Il vuoto non è il nemico.<br>È il punto di partenza.</h2>
+            <p>Togli le bugie, le maschere, le storie che ti racconti.<br>Ciò che resta è più vero, più solido, più tuo.</p>
+            <a href="https://egovoid.vercel.app" class="cta-primary">Inizia Ora – È Gratis</a>
+            <p style="margin-top: 30px; font-size: 0.95em; color: #666;">Il tuo io è un mito da decostruire.</p>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>"Whatever happens, happens." 👁️</p>
+            <p style="margin-top: 20px;">
+                <a href="https://egovoid.vercel.app">egovoid.app</a> · 
+                <a href="https://github.com/furcifeyes/egovoid">GitHub</a> · 
+                Versione 2.0 (2026)
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
