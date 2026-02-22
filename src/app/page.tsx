@@ -603,7 +603,24 @@ SOLO le 7 sezioni con i dati.`;
           />
           <p style={{ color: '#8b5cf6', marginTop: '10px', fontSize: '0.9em' }}>Genera Fascicolo</p>
         </div>
-        
+        {/* Sotto il logo */}
+
+<div style={{ marginTop: '15px' }}>
+  <a 
+    href="/about.html"
+    style={{
+      color: '#8b5cf6',
+      textDecoration: 'none',
+      fontSize: '0.95em',
+      border: '1px solid #8b5cf6',
+      padding: '8px 16px',
+      borderRadius: '4px',
+      display: 'inline-block'
+    }}
+  >
+    📖 Cos'è EgoVoid?
+  </a>
+</div>
         {/* AUTH STATUS */}
         <div style={{ marginTop: '15px' }}>
           {user ? (
