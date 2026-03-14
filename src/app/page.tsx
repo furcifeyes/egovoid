@@ -375,15 +375,13 @@ export default function EgoVoid() {
       };
       setMessages(prev => [...prev, userMsg]);
 
-      const res = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input })
-      });
-      
-      const data = await res.json();
-      const aiResponse = data.text || data.error || 'Nessuna risposta';
-      setResponse(aiResponse);
+      const res = await fetch('https://web-production-96bc6.up.railway.app/chat?message=' + encodeURIComponent(input), {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' }
+});
+const data = await res.json();
+const aiResponse = data.response || data.error || 'Nessuna risposta';
+setResponse(aiResponse);
 
       await saveMessage(currentSessionId, 'egovoid', aiResponse, 'gemini');
       
@@ -543,17 +541,19 @@ NO preamboli
 NO conclusioni motivazionali
 SOLO le 7 sezioni con i dati.`;
 
-    const res = await fetch('/api/gemini', {
+    const res = await fetch('https://web-production-96bc6.up.railway.app/fascicolo', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ 
-    message: promptAnalisi,
-    maxOutputTokens: 2000
+    messages: allMessages.map(m => ({
+      sender: m.sender,
+      content: m.content
+    }))
   })
 });
 
     const data = await res.json();
-    const report = data.text || 'Errore nella generazione del fascicolo';
+    const report = data.fascicolo || 'Errore nella generazione del fascicolo';
     
     setFascicolo(report);
     setGeneratingFascicolo(false);
