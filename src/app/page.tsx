@@ -436,14 +436,15 @@ const handleFasciculo = async () => {
       return;
     }
 
-    // 2. Carica TUTTI i messaggi di TUTTE le sessioni
+    // 2. Carica ULTIMI 80 messaggi
     const sessionIds = allSessions.map(s => s.id);
     
     const { data: allMessages, error: messagesError } = await supabase
       .from('messages')
       .select('*')
       .in('session_id', sessionIds)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false })
+      .limit(80);
     
     if (messagesError) throw messagesError;
     
@@ -453,93 +454,7 @@ const handleFasciculo = async () => {
       return;
     }
 
-    setFascicolo(`Analizzando ${allMessages.length} messaggi da ${allSessions.length} conversazioni...`);
-
-    // 3. Crea trascrizione globale
-    const trascrizione = allMessages
-      .map(m => `${m.sender.toUpperCase()}: ${m.content}`)
-      .join('\n\n');
-
-    // 4. Prompt aggiornato per analisi globale
-  const promptAnalisi = `Sei uno psicologo clinico specializzato in analisi di trascrizioni conversazionali.
-Analizza TUTTE le conversazioni fornite e genera un REFERTO PSICOLOGICO STRUTTURATO.
-
-TRASCRIZIONE COMPLETA:
-${allMessages.length} messaggi da ${allSessions.length} conversazioni
-${trascrizione}
-
-GENERA REFERTO CON QUESTE 7 SEZIONI:
-
-## 1. BIAS COGNITIVI RILEVATI
-Per ogni bias (MAX 3):
-- Nome tecnico del bias
-- UN esempio specifico dalla conversazione (citazione breve)
-- Come influenza le azioni dell'utente (1 frase)
-Formato: "NOME BIAS: [esempio] → IMPATTO: [conseguenza comportamentale]"
-
-## 2. PATTERN EMOTIVI RICORRENTI
-Identifica 2-3 emozioni dominanti:
-- Nome emozione + intensità (bassa/media/alta)
-- Trigger specifico (cosa la scatena)
-- Reazione comportamentale (cosa fa l'utente)
-MAX 4 frasi per emozione.
-
-## 3. TRAUMI E FERITE PSICOLOGICHE
-SOLO se emersi chiaramente:
-- Evento specifico menzionato
-- Impatto visibile nel presente
-Se NON ci sono evidenze chiare: "Non emersi elementi sufficienti in questa sessione."
-NO speculazioni. SOLO fatti dalle conversazioni.
-
-## 4. CONTRADDIZIONI IDENTITARIE
-Elenca 2-3 discrepanze:
-- "L'utente dice: [X] ma fa: [Y]"
-- Esempio concreto dalla conversazione
-MAX 3 frasi per contraddizione.
-
-## 5. MECCANISMI DI DIFESA E FUGA
-Pattern di evitamento identificati:
-- Razionalizzazioni ("È normale perché...")
-- Proiezioni ("Gli altri non capiscono...")
-- Negazioni ("Non è un problema...")
-- Fughe concrete (lavoro, social, sostanze)
-UN esempio per ciascuno identificato.
-
-## 6. NARRAZIONI IDENTITARIE
-Frasi tipo "sono una persona che..." dalla conversazione.
-Per ciascuna:
-- Citazione esatta
-- Se AIUTA o BLOCCA la crescita (1 frase)
-
-## 7. AREE DI LAVORO SUGGERITE
-3-5 aree con struttura:
-- Problema specifico (1 frase)
-- Obiettivo misurabile (1 frase)
-- Prima azione concreta (1 frase)
-
-STILE IMPERATIVO:
-- DIRETTO e SINTETICO: ogni sezione MAX 5 frasi
-- CONCRETO: esempi specifici, NO generalizzazioni
-- CLINICO ma COMPRENSIBILE: termini tecnici spiegati semplicemente
-- ACTIONABLE: focus su cosa può FARE l'utente
-- NO prolissità accademica
-- NO filosofia o citazioni motivazionali
-
-ESEMPIO TONO GIUSTO:
-❌ SBAGLIATO: "L'affermazione 'La vita non ha senso' rappresenta una generalizzazione eccessiva basata probabilmente su esperienze negative recenti..."
-
-✅ CORRETTO: "GENERALIZZAZIONE ECCESSIVA: 'La vita non ha senso' → generalizza da eventi recenti negativi a tutta l'esistenza. IMPATTO: blocca ricerca soluzioni concrete. LAVORO: Identificare trigger specifico ultima settimana."
-
-LUNGHEZZA TARGET:
-- Ogni sezione: 3-5 frasi
-- Report totale: ~500-800 parole
-- Mai superare 1200 parole
-
-OUTPUT PURO:
-Rispondi SOLO con il referto strutturato.
-NO preamboli
-NO conclusioni motivazionali
-SOLO le 7 sezioni con i dati.`;
+    setFascicolo(`Analizzando ${allMessages.length} messaggi...`);
 
     const res = await fetch('https://web-production-96bc6.up.railway.app/fascicolo', {
   method: 'POST',
@@ -554,6 +469,19 @@ SOLO le 7 sezioni con i dati.`;
 
     const data = await res.json();
     const report = data.fascicolo || 'Errore nella generazione del fascicolo';
+    
+    // Salva in Supabase
+    const { error: saveError } = await supabase
+      .from('reports')
+      .insert({
+        user_id: user?.id || null,
+        type: 'fascicolo',
+        content: report,
+        messages_analyzed: allMessages.length
+      });
+    
+    if (saveError) console.error('Errore salvataggio:', saveError);
+    else console.log('✅ Fascicolo salvato');
     
     setFascicolo(report);
     setGeneratingFascicolo(false);
