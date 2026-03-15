@@ -452,7 +452,7 @@ export default function EgoVoid() {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', minWidth: 0 }}>
 
               {/* SIDEBAR TOGGLE */}
-              <button onClick={() => setShowSidebar(!showSidebar)} style={{ position: 'absolute', left: '16px', top: '16px', background: 'none', border: '1px solid var(--violet-border)', color: 'var(--violet)', padding: '6px 10px', cursor: 'pointer', borderRadius: '2px', fontSize: '0.75em', zIndex: 10, fontFamily: 'var(--font-display)' }}>
+              <button onClick={() => setShowSidebar(!showSidebar)} style={{ position: 'absolute', left: '16px', top: '16px', background: 'none', border: '1px solid var(--violet-border)', color: 'var(--violet)', padding: '6px 10px', cursor: 'pointer', borderRadius: '2px', fontSize: '0.75em', zIndex: 30, fontFamily: 'var(--font-display)' }}>
                 {showSidebar ? '✕' : '☰'}
               </button>
 
