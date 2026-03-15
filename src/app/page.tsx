@@ -36,10 +36,7 @@ export default function EgoVoid() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [showSidebar, setShowSidebar] = useState(false);
 
-  // Sidebar chiusa di default su mobile
-  useEffect(() => {
-    setShowSidebar(window.innerWidth >= 768);
-  }, []);
+
   const [fascicolo, setFascicolo] = useState<string>('');
   const [showFascicolo, setShowFascicolo] = useState(false);
   const [generatingFascicolo, setGeneratingFascicolo] = useState(false);
@@ -360,6 +357,10 @@ export default function EgoVoid() {
         .sidebar-session:hover { background: rgba(139,92,246,0.15) !important; }
         .btn-ghost:hover { background: rgba(139,92,246,0.15) !important; }
         .report-card:hover { border-color: rgba(139,92,246,0.6) !important; background: rgba(139,92,246,0.08) !important; }
+        @media (max-width: 767px) {
+          .sidebar-wrapper { width: 0 !important; min-width: 0 !important; padding: 0 !important; border: none !important; }
+          .sidebar-wrapper.open { width: 260px !important; min-width: 260px !important; position: absolute !important; height: 100% !important; z-index: 20 !important; padding: 20px 16px !important; }
+        }
 
         @media (max-width: 768px) {
           .chat-container { padding: 12px !important; padding-top: 60px !important; }
@@ -427,7 +428,7 @@ export default function EgoVoid() {
           <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
 
             {/* SIDEBAR */}
-            <div className="sidebar" style={{ width: showSidebar ? '260px' : '0', minWidth: showSidebar ? '260px' : '0', position: typeof window !== 'undefined' && window.innerWidth < 768 ? 'absolute' : 'relative', height: '100%', zIndex: 20, backgroundColor: 'rgba(8,4,16,0.98)', overflow: 'hidden', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)', borderRight: showSidebar ? '1px solid var(--violet-border)' : 'none', display: 'flex', flexDirection: 'column', padding: showSidebar ? '20px 16px' : '0' }}>
+            <div className={`sidebar-wrapper${showSidebar ? ' open' : ''}`} style={{ width: showSidebar ? '260px' : '0', minWidth: showSidebar ? '260px' : '0', position: typeof window !== 'undefined' && window.innerWidth < 768 ? 'absolute' : 'relative', height: '100%', zIndex: 20, backgroundColor: 'rgba(8,4,16,0.98)', overflow: 'hidden', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)', borderRight: showSidebar ? '1px solid var(--violet-border)' : 'none', display: 'flex', flexDirection: 'column', padding: showSidebar ? '20px 16px' : '0' }}>
               <p style={{ fontFamily: 'var(--font-display)', fontSize: '0.65em', letterSpacing: '0.2em', color: 'rgba(139,92,246,0.5)', marginBottom: '16px', textTransform: 'uppercase' }}>Sessioni</p>
               <button onClick={createSession} style={{ background: 'none', border: '1px solid var(--violet-border)', color: 'var(--violet)', padding: '8px', marginBottom: '8px', cursor: 'pointer', borderRadius: '2px', fontSize: '0.75em', fontFamily: 'var(--font-display)', letterSpacing: '0.1em', width: '100%' }}>+ NUOVA</button>
               <button onClick={resetAll} style={{ background: 'none', border: '1px solid rgba(220,38,38,0.3)', color: 'rgba(220,38,38,0.6)', padding: '8px', marginBottom: '20px', cursor: 'pointer', borderRadius: '2px', fontSize: '0.7em', fontFamily: 'var(--font-display)', letterSpacing: '0.1em', width: '100%' }}>DISSOLVI TUTTO</button>
