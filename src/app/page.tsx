@@ -35,6 +35,11 @@ export default function EgoVoid() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [showSidebar, setShowSidebar] = useState(false);
+
+  // Sidebar chiusa di default su mobile
+  useEffect(() => {
+    setShowSidebar(window.innerWidth >= 768);
+  }, []);
   const [fascicolo, setFascicolo] = useState<string>('');
   const [showFascicolo, setShowFascicolo] = useState(false);
   const [generatingFascicolo, setGeneratingFascicolo] = useState(false);
