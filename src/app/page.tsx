@@ -44,6 +44,8 @@ export default function EgoVoid() {
   const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
   const [showSavedReports, setShowSavedReports] = useState(false);
   const [loadingReports, setLoadingReports] = useState(false);
+  const [isCustode, setIsCustode] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [selectedReport, setSelectedReport] = useState<SavedReport | null>(null);
   const [user, setUser] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
@@ -64,12 +66,29 @@ export default function EgoVoid() {
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) verificaCustode(session.user.id);
+      else setIsCustode(false);
     });
     return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     if (!authInitialized) return;
+    // Gestione ritorno da Stripe
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('pagamento') === 'successo') {
+        setTimeout(() => {
+          alert('✦ Benvenuto tra i Custodi. La tua memoria è ora illimitata.');
+          if (user) verificaCustode(user.id);
+          window.history.replaceState({}, '', '/');
+        }, 500);
+      }
+    }
+
+    // Verifica custode se utente già loggato
+    if (user) verificaCustode(user.id);
+
     const savedSessionId = localStorage.getItem('egovoid_current_session');
     if (savedSessionId) {
       supabase.from('sessions').select('id').eq('id', savedSessionId).single()
@@ -193,6 +212,22 @@ export default function EgoVoid() {
 
   const cancelRename = () => { setEditingSessionId(null); setEditingTitle(''); };
 
+  const verificaCustode = async (userId: string) => {
+    try {
+      const res = await fetch(`https://web-production-96bc6.up.railway.app/verifica-custode?user_id=${userId}`);
+      const data = await res.json();
+      setIsCustode(data.is_custode || false);
+    } catch (e) { console.error('Errore verifica custode:', e); }
+  };
+
+  const avviaUpgrade = async () => {
+    try {
+      const res = await fetch('https://web-production-96bc6.up.railway.app/crea-pagamento', { method: 'POST' });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (e) { console.error('Errore pagamento:', e); }
+  };
+
   const loadSavedReports = async () => {
     setLoadingReports(true);
     try {
@@ -282,6 +317,13 @@ export default function EgoVoid() {
   };
 
   const handleFasciculo = async () => {
+    // Controllo limite free tier
+    if (!isCustode && savedReports.length >= 3) {
+      setShowFascicoloMenu(false);
+      setShowUpgrade(true);
+      return;
+    }
+
     setGeneratingFascicolo(true);
     setShowFascicolo(true);
     setShowFascicoloMenu(false);
@@ -413,7 +455,10 @@ export default function EgoVoid() {
               </a>
               {user ? (
                 <>
-                  <span style={{ color: 'rgba(16,185,129,0.8)', fontSize: '0.7em', letterSpacing: '0.05em' }}>✦ {user.email}</span>
+                  <span style={{ color: 'rgba(16,185,129,0.8)', fontSize: '0.7em', letterSpacing: '0.05em' }}>
+                ✦ {user.email}
+                {isCustode && <span style={{ marginLeft: '8px', color: 'var(--violet)', fontFamily: 'var(--font-display)', fontSize: '0.8em', letterSpacing: '0.15em' }}>· CUSTODE</span>}
+              </span>
                   <button onClick={handleLogout} className="btn-ghost" style={{ background: 'none', border: '1px solid rgba(220,38,38,0.4)', color: 'rgba(220,38,38,0.7)', padding: '6px 14px', cursor: 'pointer', borderRadius: '2px', fontSize: '0.7em', fontFamily: 'var(--font-display)', letterSpacing: '0.1em' }}>ESCI</button>
                 </>
               ) : (
@@ -592,6 +637,32 @@ export default function EgoVoid() {
                   <button onClick={() => { setShowSavedReports(false); setShowFascicoloMenu(false); }} style={{ background: 'none', border: 'none', color: 'rgba(156,163,175,0.4)', cursor: 'pointer', fontSize: '0.7em', fontFamily: 'var(--font-display)', letterSpacing: '0.1em', alignSelf: 'center', marginTop: '16px' }}>CHIUDI</button>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* UPGRADE MODAL */}
+        {showUpgrade && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ background: 'rgba(8,4,20,0.99)', padding: '36px', borderRadius: '2px', border: '1px solid var(--violet-border)', maxWidth: '440px', width: '100%', textAlign: 'center' }}>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: '0.65em', letterSpacing: '0.2em', color: 'rgba(139,92,246,0.4)', marginBottom: '16px' }}>LIMITE RAGGIUNTO</p>
+              <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--violet)', fontSize: '1em', letterSpacing: '0.1em', marginBottom: '16px', fontWeight: 400 }}>HAI USATO 3 FASCICOLI</h2>
+              <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text-dim)', fontSize: '1em', marginBottom: '8px', fontStyle: 'italic' }}>
+                Il piano gratuito include 3 fascicoli salvati.
+              </p>
+              <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text-dim)', fontSize: '1em', marginBottom: '28px', fontStyle: 'italic' }}>
+                Diventa <strong style={{ color: 'var(--text-primary)' }}>Custode</strong> per memoria illimitata, fascicoli infiniti e Risonanza mensile.
+              </p>
+              <div style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid var(--violet-border)', padding: '20px', borderRadius: '2px', marginBottom: '24px' }}>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.8em', color: 'var(--text-primary)', marginBottom: '4px' }}>€3<span style={{ fontSize: '0.4em', color: 'var(--text-dim)' }}>/mese</span></p>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '0.65em', letterSpacing: '0.15em', color: 'rgba(139,92,246,0.5)' }}>PIANO CUSTODE</p>
+              </div>
+              <button onClick={avviaUpgrade} style={{ width: '100%', background: 'var(--violet)', color: 'white', padding: '14px', border: 'none', cursor: 'pointer', borderRadius: '2px', fontFamily: 'var(--font-display)', fontSize: '0.75em', letterSpacing: '0.15em', marginBottom: '12px' }}>
+                DIVENTA CUSTODE
+              </button>
+              <button onClick={() => setShowUpgrade(false)} style={{ width: '100%', background: 'none', border: 'none', color: 'rgba(156,163,175,0.4)', cursor: 'pointer', fontFamily: 'var(--font-display)', fontSize: '0.7em', letterSpacing: '0.1em' }}>
+                CHIUDI
+              </button>
             </div>
           </div>
         )}
