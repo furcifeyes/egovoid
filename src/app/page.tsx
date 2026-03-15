@@ -329,20 +329,41 @@ export default function EgoVoid() {
     setShowFascicoloMenu(false);
     setFascicolo('');
     try {
-      let sessionsQuery = supabase.from('sessions').select('id').order('created_at', { ascending: true });
-      if (user) { sessionsQuery = sessionsQuery.eq('user_id', user.id); }
-      else { sessionsQuery = sessionsQuery.is('user_id', null); }
-      const { data: allSessions, error: sessionsError } = await sessionsQuery;
-      if (sessionsError) throw sessionsError;
-      if (!allSessions || allSessions.length === 0) { setFascicolo('Nessuna conversazione trovata.'); setGeneratingFascicolo(false); return; }
-      const sessionIds = allSessions.map(s => s.id);
-      const { data: allMessages, error: messagesError } = await supabase.from('messages').select('*').in('session_id', sessionIds).order('created_at', { ascending: false }).limit(80);
+      // Usa solo messaggi della sessione corrente
+      if (!sessionId) { setFascicolo('Inizia una conversazione prima di generare il fascicolo.'); setGeneratingFascicolo(false); return; }
+      
+      const { data: currentMessages, error: messagesError } = await supabase
+        .from('messages').select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true });
+      
       if (messagesError) throw messagesError;
-      if (!allMessages || allMessages.length < 4) { setFascicolo('Servono almeno 4 messaggi per generare un fascicolo.'); setGeneratingFascicolo(false); return; }
-      const res = await fetch('https://web-production-96bc6.up.railway.app/fascicolo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: allMessages.map(m => ({ sender: m.sender, content: m.content })) }) });
+      if (!currentMessages || currentMessages.length < 6) { 
+        setFascicolo('Servono almeno 6 messaggi in questa sessione per generare un fascicolo significativo.'); 
+        setGeneratingFascicolo(false); return; 
+      }
+
+      // Estrai TAG dai fascicoli precedenti come contesto
+      const tags = savedReports
+        .slice(0, 3)
+        .map(r => {
+          const match = r.content.match(/## 6\. TAG IDENTITARI[\s\S]*?(#\w+[\s\S]*?)(?=##|$)/);
+          return match ? match[1].trim() : '';
+        })
+        .filter(t => t.length > 0)
+        .join(' ');
+
+      const res = await fetch('https://web-production-96bc6.up.railway.app/fascicolo', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+          messages: currentMessages.map(m => ({ sender: m.sender, content: m.content })),
+          context_tags: tags || null
+        }) 
+      });
       const data = await res.json();
       const report = data.fascicolo || 'Errore nella generazione del fascicolo';
-      await supabase.from('reports').insert({ user_id: user?.id || null, type: 'fascicolo', content: report, messages_analyzed: allMessages.length });
+      await supabase.from('reports').insert({ user_id: user?.id || null, type: 'fascicolo', content: report, messages_analyzed: currentMessages.length });
       setFascicolo(report);
       setGeneratingFascicolo(false);
     } catch (err) { console.error('Error generating fascicolo:', err); setFascicolo('Errore durante la generazione.'); setGeneratingFascicolo(false); }
