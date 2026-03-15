@@ -422,7 +422,7 @@ export default function EgoVoid() {
           <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
 
             {/* SIDEBAR */}
-            <div className="sidebar" style={{ width: showSidebar ? '260px' : '0', minWidth: showSidebar ? '260px' : '0', backgroundColor: 'rgba(8,4,16,0.98)', overflow: 'hidden', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)', borderRight: showSidebar ? '1px solid var(--violet-border)' : 'none', display: 'flex', flexDirection: 'column', padding: showSidebar ? '20px 16px' : '0' }}>
+            <div className="sidebar" style={{ width: showSidebar ? '260px' : '0', minWidth: showSidebar ? '260px' : '0', position: typeof window !== 'undefined' && window.innerWidth < 768 ? 'absolute' : 'relative', height: '100%', zIndex: 20, backgroundColor: 'rgba(8,4,16,0.98)', overflow: 'hidden', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)', borderRight: showSidebar ? '1px solid var(--violet-border)' : 'none', display: 'flex', flexDirection: 'column', padding: showSidebar ? '20px 16px' : '0' }}>
               <p style={{ fontFamily: 'var(--font-display)', fontSize: '0.65em', letterSpacing: '0.2em', color: 'rgba(139,92,246,0.5)', marginBottom: '16px', textTransform: 'uppercase' }}>Sessioni</p>
               <button onClick={createSession} style={{ background: 'none', border: '1px solid var(--violet-border)', color: 'var(--violet)', padding: '8px', marginBottom: '8px', cursor: 'pointer', borderRadius: '2px', fontSize: '0.75em', fontFamily: 'var(--font-display)', letterSpacing: '0.1em', width: '100%' }}>+ NUOVA</button>
               <button onClick={resetAll} style={{ background: 'none', border: '1px solid rgba(220,38,38,0.3)', color: 'rgba(220,38,38,0.6)', padding: '8px', marginBottom: '20px', cursor: 'pointer', borderRadius: '2px', fontSize: '0.7em', fontFamily: 'var(--font-display)', letterSpacing: '0.1em', width: '100%' }}>DISSOLVI TUTTO</button>
@@ -432,7 +432,7 @@ export default function EgoVoid() {
                     {editingSessionId === session.id ? (
                       <input type="text" value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} onBlur={() => saveRename(session.id)} onKeyPress={(e) => { if (e.key === 'Enter') saveRename(session.id); if (e.key === 'Escape') cancelRename(); }} autoFocus style={{ flex: 1, background: 'transparent', color: 'var(--text-primary)', border: 'none', outline: 'none', fontSize: '0.8em', fontFamily: 'var(--font-body)' }} />
                     ) : (
-                      <div onClick={() => loadMessages(session.id)} onDoubleClick={(e) => startRename(session.id, session.title || '', e)} style={{ flex: 1, fontSize: '0.8em', color: sessionId === session.id ? 'var(--text-primary)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div onClick={() => { loadMessages(session.id); if (window.innerWidth < 768) setShowSidebar(false); }} onDoubleClick={(e) => startRename(session.id, session.title || '', e)} style={{ flex: 1, fontSize: '0.8em', color: sessionId === session.id ? 'var(--text-primary)' : 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {getSessionDisplayName(session)}
                       </div>
                     )}
@@ -457,7 +457,7 @@ export default function EgoVoid() {
                 <div className="chat-messages" style={{ maxWidth: '680px', width: '100%', margin: '0 auto', flex: 1 }}>
                   {messages.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                      <p style={{ fontFamily: 'var(--font-display)', fontSize: '0.7em', letterSpacing: '0.2em', color: 'rgba(139,92,246,0.3)', textTransform: 'uppercase' }}>L\'abisso è pronto</p>
+                      <p style={{ fontFamily: 'var(--font-display)', fontSize: '0.7em', letterSpacing: '0.2em', color: 'rgba(139,92,246,0.3)', textTransform: 'uppercase' }}>L'abisso è pronto</p>
                     </div>
                   )}
                   {messages.map((msg, i) => (
