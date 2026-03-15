@@ -247,7 +247,26 @@ export default function EgoVoid() {
       await saveMessage(currentSessionId, 'user', input, 'groq');
       const userMsg: ChatMessage = { id: Date.now().toString(), session_id: currentSessionId, sender: 'user', content: input, route_used: 'groq', created_at: new Date().toISOString() };
       setMessages(prev => [...prev, userMsg]);
-      const res = await fetch('https://web-production-96bc6.up.railway.app/chat?message=' + encodeURIComponent(input), { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+
+      // Costruisci profilo utente dai fascicoli salvati
+      let profiloUtente = '';
+      if (savedReports.length > 0) {
+        try {
+          const profiloRes = await fetch('https://web-production-96bc6.up.railway.app/profilo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: user?.id || null,
+              fascicoli: savedReports.slice(0, 3).map(r => r.content)
+            })
+          });
+          const profiloData = await profiloRes.json();
+          if (profiloData.profilo) profiloUtente = profiloData.profilo;
+        } catch (e) { console.log('Profilo non disponibile'); }
+      }
+
+      const chatUrl = 'https://web-production-96bc6.up.railway.app/chat?message=' + encodeURIComponent(input) + (profiloUtente ? '&profilo=' + encodeURIComponent(profiloUtente) : '');
+      const res = await fetch(chatUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
       const data = await res.json();
       const aiResponse = data.response || data.error || 'Nessuna risposta';
       setResponse(aiResponse);
