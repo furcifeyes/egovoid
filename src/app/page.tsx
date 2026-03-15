@@ -365,6 +365,39 @@ export default function EgoVoid() {
     return new Date(session.created_at).toLocaleDateString('it-IT');
   };
 
+  const renderMarkdown = (text: string) => {
+    const lines = text.split('\n');
+    return lines.map((line, i) => {
+      // Titoli
+      if (line.startsWith('### ')) return <p key={i} style={{fontWeight:'bold', color:'var(--violet)', fontSize:'1em', marginBottom:'6px', marginTop:'10px'}}>{line.slice(4)}</p>;
+      if (line.startsWith('## ')) return <p key={i} style={{fontWeight:'bold', color:'var(--violet)', fontSize:'1.05em', marginBottom:'8px', marginTop:'12px'}}>{line.slice(3)}</p>;
+      if (line.startsWith('# ')) return <p key={i} style={{fontWeight:'bold', color:'var(--violet)', fontSize:'1.1em', marginBottom:'10px', marginTop:'14px'}}>{line.slice(2)}</p>;
+      // Liste numerate
+      if (/^\d+\.\s/.test(line)) {
+        const txt = line.replace(/^\d+\.\s/, '');
+        return <p key={i} style={{paddingLeft:'16px', marginBottom:'4px', color:'var(--text-dim)'}}><span style={{color:'var(--violet)', marginRight:'6px'}}>✦</span>{formatInline(txt)}</p>;
+      }
+      // Liste puntate
+      if (line.startsWith('* ') || line.startsWith('- ')) {
+        const txt = line.slice(2);
+        return <p key={i} style={{paddingLeft:'16px', marginBottom:'4px', color:'var(--text-dim)'}}><span style={{color:'var(--violet)', marginRight:'6px'}}>·</span>{formatInline(txt)}</p>;
+      }
+      // Linea vuota
+      if (line.trim() === '') return <br key={i} />;
+      // Testo normale
+      return <p key={i} style={{marginBottom:'6px', lineHeight:'1.7', color:'var(--text-dim)'}}>{formatInline(line)}</p>;
+    });
+  };
+
+  const formatInline = (text: string): React.ReactNode => {
+    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) return <strong key={i} style={{color:'var(--text-primary)', fontWeight:'bold'}}>{part.slice(2,-2)}</strong>;
+      if (part.startsWith('*') && part.endsWith('*')) return <em key={i} style={{fontStyle:'italic', color:'var(--text-primary)'}}>{part.slice(1,-1)}</em>;
+      return part;
+    });
+  };
+
   return (
     <>
       <style>{`
@@ -517,7 +550,7 @@ export default function EgoVoid() {
                         {msg.sender === 'user' ? 'Tu' : 'GDS-01'}
                       </span>
                       <div style={{ maxWidth: '85%', padding: '12px 16px', background: msg.sender === 'user' ? 'rgba(139,92,246,0.1)' : 'rgba(15,10,25,0.8)', border: msg.sender === 'user' ? '1px solid rgba(139,92,246,0.3)' : '1px solid rgba(139,92,246,0.15)', borderRadius: '2px', fontSize: '1em', lineHeight: 1.7, color: msg.sender === 'user' ? 'var(--text-dim)' : 'var(--text-primary)', fontStyle: msg.sender === 'egovoid' ? 'italic' : 'normal' }}>
-                        {msg.content}
+                        {msg.sender === 'egovoid' ? renderMarkdown(msg.content) : msg.content}
                       </div>
                     </div>
                   ))}
