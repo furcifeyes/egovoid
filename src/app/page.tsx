@@ -54,12 +54,21 @@ export default function EgoVoid() {
   const [password, setPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [anonId, setAnonId] = useState<string>('');
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Genera o recupera UUID anonimo
+    let storedAnonId = localStorage.getItem('egovoid_anon_id');
+    if (!storedAnonId) {
+      storedAnonId = crypto.randomUUID();
+      localStorage.setItem('egovoid_anon_id', storedAnonId);
+    }
+    setAnonId(storedAnonId);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setAuthInitialized(true);
@@ -108,7 +117,8 @@ export default function EgoVoid() {
     if (sessionId) return sessionId;
     try {
       const userId = user?.id || null;
-      const { data, error } = await supabase.from('sessions').insert({ user_id: userId }).select().single();
+      const storedAnonId = localStorage.getItem('egovoid_anon_id') || anonId;
+      const { data, error } = await supabase.from('sessions').insert({ user_id: userId, anon_id: userId ? null : storedAnonId }).select().single();
       if (error) throw error;
       if (data) {
         setSessionId(data.id);
@@ -127,7 +137,7 @@ export default function EgoVoid() {
     try {
       let query = supabase.from('sessions').select('*').order('created_at', { ascending: false }).limit(20);
       if (user) { query = query.eq('user_id', user.id); }
-      else { query = query.is('user_id', null); }
+      else { const storedAnonId = localStorage.getItem('egovoid_anon_id') || anonId; query = query.eq('anon_id', storedAnonId); }
       const { data, error } = await query;
       if (error) throw error;
       setSessions(data || []);
