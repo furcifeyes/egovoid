@@ -569,7 +569,7 @@ export default function EgoVoid() {
               <div className="chat-container" style={{ padding: '20px', paddingTop: '56px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
                 {/* MESSAGES */}
-                <div className="chat-messages" style={{ maxWidth: '680px', width: '100%', margin: '0 auto', flex: 1 }}>
+                <div className="chat-messages" style={{ maxWidth: '680px', width: '100%', margin: '0 auto', flex: 1, overflowY: 'auto', minHeight: 0 }}>
                   {messages.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '40px 20px' }}>
                       <p style={{ fontFamily: 'var(--font-display)', fontSize: '0.7em', letterSpacing: '0.2em', color: 'rgba(139,92,246,0.3)', textTransform: 'uppercase' }}>L'abisso è pronto</p>
@@ -601,7 +601,7 @@ export default function EgoVoid() {
                 </div>
 
                 {/* INPUT AREA */}
-                <div style={{ maxWidth: '680px', width: '100%', margin: '0 auto', marginTop: '16px' }}>
+                <div style={{ maxWidth: '680px', width: '100%', margin: '0 auto', marginTop: '16px', flexShrink: 0, paddingBottom: '16px' }}>
                   <div style={{ border: '1px solid var(--violet-border)', borderRadius: '2px', background: 'var(--bg-input)', position: 'relative' }}>
                     <textarea
                       className="chat-input"
