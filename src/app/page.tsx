@@ -492,7 +492,7 @@ export default function EgoVoid() {
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
           {/* BANNER */}
-          <div className="banner-img" style={{ width: '100%', height: '450px', overflow: 'hidden', position: 'relative' }}>
+          <div className="banner-img" style={{ width: '100%', height: '380px', overflow: 'hidden', position: 'relative' }}>
             <img src="https://res.cloudinary.com/dyiumboth/image/upload/v1774389451/dark-cosmic-banner-mystical-eye-with-spi_b5CZrJ0pTVyq47XIfcsskQ_t6PgrTEsQ7KKxdVgBPnaCA_cover_iyzbgi.jpg" alt="EgoVoid" style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center 55%' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, #000 100%)' }} />
           </div>
