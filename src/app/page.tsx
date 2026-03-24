@@ -1,4 +1,5 @@
 'use client';
+const BACKEND_URL = 'https://api.egovoid.app';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
@@ -224,7 +225,7 @@ export default function EgoVoid() {
 
   const verificaCustode = async (userId: string) => {
     try {
-      const res = await fetch(`https://web-production-96bc6.up.railway.app/verifica-custode?user_id=${userId}`);
+      const res = await fetch(`https://api.egovoid.app/verifica-custode?user_id=${userId}`);
       const data = await res.json();
       setIsCustode(data.is_custode || false);
     } catch (e) { console.error('Errore verifica custode:', e); }
@@ -232,7 +233,7 @@ export default function EgoVoid() {
 
   const avviaUpgrade = async () => {
     try {
-      const res = await fetch('https://web-production-96bc6.up.railway.app/crea-pagamento', { method: 'POST' });
+      const res = await fetch('https://api.egovoid.app/crea-pagamento', { method: 'POST' });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     } catch (e) { console.error('Errore pagamento:', e); }
@@ -303,7 +304,7 @@ export default function EgoVoid() {
       let profiloUtente = '';
       if (savedReports.length > 0) {
         try {
-          const profiloRes = await fetch('https://web-production-96bc6.up.railway.app/profilo', {
+          const profiloRes = await fetch('https://api.egovoid.app/profilo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: user?.id || null, fascicoli: savedReports.slice(0, 3).map(r => r.content) })
@@ -313,7 +314,7 @@ export default function EgoVoid() {
         } catch (e) { console.log('Profilo non disponibile'); }
       }
 
-      const chatUrl = 'https://web-production-96bc6.up.railway.app/chat?message=' + encodeURIComponent(currentInput) + (profiloUtente ? '&profilo=' + encodeURIComponent(profiloUtente) : '');
+      const chatUrl = 'https://api.egovoid.app/chat?message=' + encodeURIComponent(currentInput) + (profiloUtente ? '&profilo=' + encodeURIComponent(profiloUtente) : '');
       const res = await fetch(chatUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
       const data = await res.json();
       const aiResponse = data.response || data.error || 'Nessuna risposta';
@@ -363,7 +364,7 @@ export default function EgoVoid() {
         .filter(t => t.length > 0)
         .join(' ');
 
-      const res = await fetch('https://web-production-96bc6.up.railway.app/fascicolo', { 
+      const res = await fetch('https://api.egovoid.app/fascicolo', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ 
