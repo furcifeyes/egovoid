@@ -493,7 +493,7 @@ export default function EgoVoid() {
 
           {/* BANNER */}
           <div className="banner-img" style={{ width: '100%', height: '450px', overflow: 'hidden', position: 'relative' }}>
-            <img src="https://res.cloudinary.com/dyiumboth/image/upload/v1774389451/dark-cosmic-banner-mystical-eye-with-spi_b5CZrJ0pTVyq47XIfcsskQ_t6PgrTEsQ7KKxdVgBPnaCA_cover_iyzbgi.jpg" alt="EgoVoid" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 55%' }} />
+            <img src="https://res.cloudinary.com/dyiumboth/image/upload/v1774389451/dark-cosmic-banner-mystical-eye-with-spi_b5CZrJ0pTVyq47XIfcsskQ_t6PgrTEsQ7KKxdVgBPnaCA_cover_iyzbgi.jpg" alt="EgoVoid" style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center 55%' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, #000 100%)' }} />
           </div>
 
@@ -503,7 +503,7 @@ export default function EgoVoid() {
             {/* LOGO FASCICOLO */}
             <div onClick={() => { setShowFascicoloMenu(true); loadSavedReports(); }} style={{ cursor: 'pointer', display: 'inline-block', position: 'relative' }}>
               <div className="glow-border" style={{ width: '90px', height: '90px', borderRadius: '50%', border: '1px solid var(--violet-border)', overflow: 'hidden', margin: '0 auto' }}>
-                <img src="https://res.cloudinary.com/dyiumboth/image/upload/v1767742397/photo_2025-12-24_00-17-00_yislbv_x081me.jpg" alt="GDS-01" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src="https://res.cloudinary.com/dyiumboth/image/upload/v1767742397/photo_2025-12-24_00-17-00_yislbv_x081me.jpg" alt="GDS-01" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
               <p style={{ color: 'var(--violet)', marginTop: '8px', fontSize: '0.75em', fontFamily: 'var(--font-display)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Fascicolo</p>
             </div>
